@@ -52,13 +52,13 @@ void mainLoop() {
     };
 
     Vertex v[3] = {
-        { -0.5f, -0.5f, 0 },
-        {  0.0f,  0.5f, 0 },
-        {  0.5f, -0.5f, 0 },
+        { -0.5f, -0.5f, 0, 0, 1.0, 1.0 },
+        {  0.0f,  0.5f, 0, 1.0, 0, 1.0 },
+        {  0.5f, -0.5f, 0, 1.0, 1.0, 0 },
     };
 
     Mesh triangle(v, 3);
-    triangle.bind();
+    //triangle.bind();
 
     // unsigned int buffer;
     // glGenBuffers(1, &buffer);

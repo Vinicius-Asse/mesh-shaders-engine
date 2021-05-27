@@ -8,15 +8,17 @@
 struct Vertex
 {
     float position[3];
+    float color[3];
 };
 
 class Mesh 
 {
 private:
     Vertex *vertex;
-    unsigned int attrCount = 0;
+    unsigned int currAttr = 0;
+    unsigned int nxtAttr = 0;
 
-    void addAttribute(unsigned int pos, unsigned int type, int count, bool normalized=false);
+    void addAttribute(GLenum type, int count, bool normalized=false);
 
 public:
     Mesh(Vertex *vertex, unsigned int count);

@@ -8,7 +8,10 @@ Mesh::Mesh(Vertex *vertex, unsigned int count) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * count, vertex, GL_STATIC_DRAW);
 
     // Setting Positions Attribute
-    addAttribute(0, GL_FLOAT, 3);
+    addAttribute(GL_FLOAT, 3);
+
+    // Setting Collor Attribute
+    addAttribute(GL_FLOAT, 3);
 
     unbind();
 }
@@ -23,8 +26,11 @@ void Mesh::unbind() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Mesh::addAttribute(unsigned int pos, unsigned int type, int count, bool normalized)
+void Mesh::addAttribute(GLenum type, int count, bool normalized)
 {
-    glVertexAttribPointer(pos, count, GL_FLOAT, normalized? GL_FALSE : GL_TRUE, sizeof(Vertex), 0);
-    glEnableVertexAttribArray(pos);
+    glVertexAttribPointer(currAttr, count, type, normalized? GL_FALSE : GL_TRUE, sizeof(Vertex), (void*) nxtAttr);
+    glEnableVertexAttribArray(currAttr);
+
+    nxtAttr += sizeof(float) * count;
+    currAttr++;
 }

@@ -1,17 +1,23 @@
 #shader vertex
 #version 330 core
 
-layout(location = 0) in vec4 position; 
+layout(location = 0) in vec4 vPos;
+layout(location = 1) in vec4 aCol;
+
+out vec4 vCol;
 
 void main(){
-    gl_Position = position;
+    gl_Position = vPos;
+    vCol = aCol;
 }
 
 #shader fragment
 #version 330 core
 
-layout(location = 0) out vec4 color; 
+out vec4 color; 
+
+in vec4 vCol; 
 
 void main(){
-    color = vec4(1.0, 0.0, 0.0, 1.0);
+    color = vCol;
 }
