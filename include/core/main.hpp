@@ -5,6 +5,9 @@
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
 
+// Classes de Abstracoes
+#include "../../src/mesh.cpp"
+
 // Bibliotecas Auxiliares
 #include <iostream>
 #include <fstream>

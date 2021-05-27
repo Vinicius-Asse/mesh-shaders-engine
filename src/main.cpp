@@ -51,13 +51,22 @@ void mainLoop() {
          0.5f, -0.5f
     };
 
-    unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+    Vertex v[3] = {
+        { -0.5f, -0.5f, 0 },
+        {  0.0f,  0.5f, 0 },
+        {  0.5f, -0.5f, 0 },
+    };
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    Mesh triangle(v, 3);
+    triangle.bind();
+
+    // unsigned int buffer;
+    // glGenBuffers(1, &buffer);
+    // glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    // glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
 
     ParsedShader shaders = parseShader("resources/shaders/base.shader");
 
