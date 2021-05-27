@@ -1,0 +1,6 @@
+# IDE
+./vscode/
+
+# Build
+*.exe
+*.o
