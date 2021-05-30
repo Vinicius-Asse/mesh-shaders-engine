@@ -7,8 +7,8 @@
 
 struct Vertex
 {
-    float position[3];
-    float color[3];
+    GLfloat position[3];
+    GLfloat color[3];
 };
 
 class Mesh 
@@ -21,12 +21,15 @@ private:
     void addAttribute(GLenum type, int count, bool normalized=false);
 
 public:
-    Mesh(Vertex *vertex, unsigned int count);
+    Mesh(GLint indices[], Vertex *vertex, unsigned int count);
+    ~Mesh();
 
-    unsigned int uId;
+    unsigned int VAO, VBO, EBO;
 
     void bind();
     void unbind();
+
+    void draw();
 };
 
 #endif

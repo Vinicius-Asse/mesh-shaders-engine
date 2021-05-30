@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         finishError("Nao foi possivel inicializar o SDL");
 
-    setupWindow("Main Window");
+    setupWindow("Game Window");
     mainLoop();
 
     SDL_GL_DeleteContext(context);
@@ -45,35 +45,26 @@ void mainLoop() {
     bool isRunning = true;
     SDL_Event e;
 
-    float positions[6] = {
-        -0.5f, -0.5f,
-         0.0f,  0.5f,
-         0.5f, -0.5f
+    Vertex v[4] = {
+        { -0.5f,  0.5f, 0, 0, 1.0, 1.0 },   // Upper Left
+        {  0.5f,  0.5f, 0, 1.0, 0, 1.0 },   // Upper Right
+        { -0.5f, -0.5f, 0, 1.0, 1.0, 0 },   // Botton Left
+        {  0.5f, -0.5f, 0, 1.0, 0.0, 0 }    // Botton Right
     };
 
-    Vertex v[3] = {
-        { -0.5f, -0.5f, 0, 0, 1.0, 1.0 },
-        {  0.0f,  0.5f, 0, 1.0, 0, 1.0 },
-        {  0.5f, -0.5f, 0, 1.0, 1.0, 0 },
+    GLint i[6] = {
+        0, 1, 2,
+        1, 2, 3
     };
 
-    Mesh triangle(v, 3);
-    //triangle.bind();
+    Mesh quad(i, v, 4);
 
-    // unsigned int buffer;
-    // glGenBuffers(1, &buffer);
-    // glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    // glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
-
-    // glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
-
+    //Setting Up Shaders
     ParsedShader shaders = parseShader("resources/shaders/base.shader");
-
     unsigned int shader = createShader(shaders.VertexShader, shaders.FragmentShader);
-
     glUseProgram(shader);
     
+    //Game Loop
     while(isRunning){
         //Handle events on queue
         while( SDL_PollEvent(&e) != 0 ){
@@ -89,22 +80,11 @@ void mainLoop() {
         }
 
         //Clear screen
+        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //Update screen
-        //MODERN OPENGL
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-
-        // OLD OPENGL
-        // glBegin(GL_TRIANGLES);
-        // glColor3f (1, 1, 0);
-        // glVertex2f(-0.5f, -0.5f);
-        // glColor3f (0, 1, 1);
-        // glVertex2f( 0.0f,  0.5f);
-        // glColor3f (1, 0, 1);
-        // glVertex2f( 0.5f, -0.5f);
-        // glEnd();
+        //Draw Elements
+        quad.draw();
 
         // Exchange frame (?) buffer (see Vulkan tutorial for what this is)
         SDL_GL_SwapWindow(window);
