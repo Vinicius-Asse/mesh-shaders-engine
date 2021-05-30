@@ -15,13 +15,14 @@ class Mesh
 {
 private:
     Vertex *vertex;
+    unsigned int indicesCount = 0;
     unsigned int currAttr = 0;
     unsigned int nxtAttr = 0;
 
     void addAttribute(GLenum type, int count, bool normalized=false);
 
 public:
-    Mesh(GLint indices[], Vertex *vertex, unsigned int count);
+    Mesh(GLint indices[], unsigned int indicesCount, Vertex *vertex, unsigned int vertexCount);
     ~Mesh();
 
     unsigned int VAO, VBO, EBO;

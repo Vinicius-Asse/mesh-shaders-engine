@@ -46,10 +46,10 @@ void mainLoop() {
     SDL_Event e;
 
     Vertex v[4] = {
-        { -0.5f,  0.5f, 0, 0, 1.0, 1.0 },   // Upper Left
-        {  0.5f,  0.5f, 0, 1.0, 0, 1.0 },   // Upper Right
-        { -0.5f, -0.5f, 0, 1.0, 1.0, 0 },   // Botton Left
-        {  0.5f, -0.5f, 0, 1.0, 0.0, 0 }    // Botton Right
+        { -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f },   // Upper Left
+        {  0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f },   // Upper Right
+        { -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f },   // Botton Left
+        {  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f }    // Botton Right
     };
 
     GLint i[6] = {
@@ -57,7 +57,7 @@ void mainLoop() {
         1, 2, 3
     };
 
-    Mesh quad(i, v, 4);
+    Mesh quad(i, 6, v, 4);
 
     //Setting Up Shaders
     ParsedShader shaders = parseShader("resources/shaders/base.shader");

@@ -1,18 +1,22 @@
 #include<core/mesh.hpp>
 
-Mesh::Mesh(GLint indices[], Vertex *vertex, unsigned int count) {
+Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned int vertexCount) {
+
+    indicesCount = _indicesCount;
+    
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
+
     std::cout << "[" << std::to_string(VBO) << "] * Mesh Buffer Created * " << std::endl;
     
     bind();
 
     // Setting Up Data Buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * count, vertex, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertexCount, vertex, GL_STATIC_DRAW);
 
     // Setting Up Index Buffer
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLint) * 6, indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLint) * indicesCount, indices, GL_STATIC_DRAW);
 
     // Setting Positions Attribute
     addAttribute(GL_FLOAT, 3);
@@ -31,11 +35,8 @@ Mesh::~Mesh() {
 }
 
 void Mesh::draw() {
-    //Set Current Vertex Array
     glBindVertexArray(VAO);
-        
-    //Draw Elements Using Intex Array
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_INT, 0);
 }
 
 void Mesh::bind() {
