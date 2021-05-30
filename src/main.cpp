@@ -55,11 +55,6 @@ void mainLoop() {
     basicShader.enable();
 
     Mesh quad(i, 6, v, 4);
-
-    //Setting Up Shaders
-    //ParsedShader shaders = parseShader("resources/shaders/base.shader");
-    //unsigned int shader = createShader(shaders.VertexShader, shaders.FragmentShader);
-    //glUseProgram(shader);
     
     //Game Loop
     while(isRunning){
