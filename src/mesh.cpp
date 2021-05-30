@@ -1,6 +1,6 @@
 #include<core/mesh.hpp>
 
-Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned int vertexCount) {
+Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned int vertexCount, Shader *shader) {
 
     indicesCount = _indicesCount;
     
@@ -11,6 +11,7 @@ Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned
     std::cout << "[" << std::to_string(VBO) << "] * Mesh Buffer Created * " << std::endl;
     
     bind();
+    shader->enable();
 
     // Setting Up Data Buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertexCount, vertex, GL_STATIC_DRAW);

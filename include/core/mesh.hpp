@@ -2,6 +2,7 @@
 #define MESH_CLASS
 
 #include<glad/glad.h>
+#include<core/shader.hpp>
 #include<iostream>
 #include<string>
 
@@ -22,7 +23,7 @@ private:
     void addAttribute(GLenum type, int count, bool normalized=false);
 
 public:
-    Mesh(GLint indices[], unsigned int indicesCount, Vertex *vertex, unsigned int vertexCount);
+    Mesh(GLint indices[], unsigned int indicesCount, Vertex *vertex, unsigned int vertexCount, Shader *shader);
     ~Mesh();
 
     unsigned int VAO, VBO, EBO;

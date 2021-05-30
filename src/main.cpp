@@ -52,9 +52,8 @@ void mainLoop() {
     };
 
     Shader basicShader("resources/shaders/base.shader");
-    basicShader.enable();
 
-    Mesh quad(i, 6, v, 4);
+    Mesh quad(i, 6, v, 4, &basicShader);
     
     //Game Loop
     while(isRunning){
