@@ -33,54 +33,107 @@ void setupWindow(const char *title){
 
     if (!window || !context)
         finishError("Nao foi possivel inicializar a Janela");
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void mainLoop() {
     bool isRunning = true;
     SDL_Event e;
 
-    Vertex v[4] = {
-        { -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 1.0f },   // Upper Left
-        {  0.5f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f },   // Upper Right
-        { -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f },   // Botton Left
-        {  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f }    // Botton Right
+    Vertex v[8] = {
+        { -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  1.0f },   // FRONT Upper Left
+        {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  1.0f },   // FRONT Upper Right
+        { -0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  0.0f },   // FRONT Botton Left
+        {  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f },   // FRONT Botton Right
+
+        { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  1.0f },   // BACK Upper Left
+        {  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  1.0f },   // BACK Upper Right
+        { -0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  0.0f },   // BACK Botton Left
+        {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f }    // BACK Botton Right
     };
 
-    GLint i[6] = {
+    GLint i[36] = {
+        //FRONT FACE
         0, 1, 2,
-        1, 2, 3
+        1, 2, 3,
+        //BACK FACE
+        4, 5, 6,
+        5, 6, 7,
+        //UPPER FACE
+        0, 1, 4,
+        4, 1, 5,
+        //BOTTON FACE
+        2, 3, 6,
+        6, 3, 7,
+        //RIGHT FACE
+        1, 3, 7,
+        1, 7, 5,
+        //LEFT FACE
+        0, 2, 6,
+        0, 6, 4
     };
 
     Shader basicShader("resources/shaders/base.shader");
 
-    Mesh quad(i, 6, v, 4, &basicShader);
-    
+    Mesh quad(i, 36, v, 8, &basicShader);
+
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 proj = glm::mat4(1.0f);
+
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
+    proj = glm::perspective(glm::radians(60.0f), (float)(SCREEN_WIDTH/SCREEN_HEIGHT), 0.3f, 200.0f);
+
+    float angle = 0.0f;
+
+    unsigned int tm1 = 0, tm2 = 0, delta = 0;
+
     //Game Loop
-    while(isRunning){
-        //Handle events on queue
-        while( SDL_PollEvent(&e) != 0 ){
-            switch (e.type){
+    while(isRunning) {
+        tm1 = SDL_GetTicks();
+        delta = tm1 - tm2;
 
-            case SDL_QUIT:
-                isRunning = false;
-                break;
-            
-            default:
-                break;
+        if (delta > 1000/120.0) {
+            //Handle events on queue
+            while(SDL_PollEvent(&e) != 0){
+                switch(e.type) {
+                case SDL_QUIT:
+                    isRunning = false;
+                    break;
+                
+                default:
+                    break;
+                }
             }
+
+            //Clear screen
+            glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.5f, 0.5f, 0.0f));
+
+            basicShader.enable();
+
+            int modelLoc = glGetUniformLocation(basicShader.uId, "model");
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+            int viewLoc = glGetUniformLocation(basicShader.uId, "view");
+            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+            int projLoc = glGetUniformLocation(basicShader.uId, "proj");
+            glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+
+            if (angle++ > 360) angle = 0;
+
+            //Draw Elements
+            quad.draw();
+
+            // Exchange frame (?) buffer (see Vulkan tutorial for what this is)
+            SDL_GL_SwapWindow(window);
+
+            tm2 = tm1;
         }
-
-        //Clear screen
-        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        //Draw Elements
-        quad.draw();
-
-        // Exchange frame (?) buffer (see Vulkan tutorial for what this is)
-        SDL_GL_SwapWindow(window);
-
-        //Wait to next frame
     }
 }
 
@@ -89,4 +142,8 @@ void finishError(std::string err_msg) {
     fflush(stdout);
     //SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", err_msg.c_str(), NULL);
     SDL_Quit();
+}
+
+double getDeltaTime(unsigned int startTime) {
+    
 }

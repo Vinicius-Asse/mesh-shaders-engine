@@ -4,6 +4,9 @@
 // Bibliotecas Principais
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Classes de Abstracoes
 #include "../../src/mesh.cpp"
@@ -19,15 +22,10 @@
 #define SCREEN_WIDTH    640
 #define SCREEN_HEIGHT   480
 
-struct ParsedShader;
-
 // Definicao de Funcoes
 void setupWindow(const char*);
 void finishError(std::string);
 void mainLoop();
-ParsedShader parseShader(const std::string&);
-unsigned int createShader(const std::string&, const std::string&);
-
 
 
 #endif

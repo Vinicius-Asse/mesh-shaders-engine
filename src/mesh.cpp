@@ -10,8 +10,8 @@ Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned
 
     std::cout << "[" << std::to_string(VBO) << "] * Mesh Buffer Created * " << std::endl;
     
-    bind();
     shader->enable();
+    bind();
 
     // Setting Up Data Buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertexCount, vertex, GL_STATIC_DRAW);
@@ -24,6 +24,7 @@ Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned
 
     // Setting Collor Attribute
     addAttribute(GL_FLOAT, 3);
+
 
     unbind();
 }
