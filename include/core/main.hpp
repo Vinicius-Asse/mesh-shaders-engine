@@ -11,6 +11,7 @@
 // Classes de Abstracoes
 #include "../../src/mesh.cpp"
 #include "../../src/shader.cpp"
+#include "../../src/cube.cpp"
 
 // Bibliotecas Auxiliares
 #include <iostream>

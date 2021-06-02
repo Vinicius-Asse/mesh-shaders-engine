@@ -1,7 +1,7 @@
 #pragma once
 
-#include <mesh.hpp>
-#include <glm.hpp>
+#include <core/mesh.hpp>
+#include <glm/glm.hpp>
 
 static const Vertex vertices[8] = {
     //     POSITION       |        COLLOR     //
@@ -15,7 +15,7 @@ static const Vertex vertices[8] = {
     {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f }    // BACK Botton Right
 };
 
-static const GLint indexes[36] = {
+static GLint indexes[36] = {
     //FRONT FACE
     0, 1, 2,
     1, 2, 3,
@@ -36,9 +36,12 @@ static const GLint indexes[36] = {
     0, 6, 4
 };
 
-class Cube : Mesh {
+class Cube : public Mesh {
 
 public:
-    Cube(glm::vec3 position, glm::vec3 scale);
-    ~Cube();
+    Cube();
+    Cube(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned int vertexCount, Shader *shader);
+    //~Cube();
+
+    static Cube getInstance(glm::vec3 position, glm::vec3 scale, Shader *shader);
 };
