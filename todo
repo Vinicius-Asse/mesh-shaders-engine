@@ -1,0 +1,9 @@
+1- Consertar a Matriz View (Atualmente está atuando como matriz model)
+2- Implementar movimentação da camera pelo mundo
+3- Diminuir a quantidade de parâmetros do construtor da classe Mesh
+4- Abstração de Transform
+5- Implantação de arquitetura Entity-Component-System
+    i  - GameManagementSystem
+    ii - RendererSystem
+    iii- GameObjectSystem
+6- Estudo aprofundado de MeshShaders
