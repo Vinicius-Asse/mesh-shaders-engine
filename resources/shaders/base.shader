@@ -6,13 +6,11 @@ layout(location = 1) in vec4 aCol;
 
 out vec4 vCol;
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
+uniform mat4 MVP;
 
 void main(){
 
-    gl_Position = proj * view * model * vPos;
+    gl_Position = MVP * vPos;
     vCol = aCol;
 }
 

@@ -7,11 +7,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 // Classes de Abstracoes
 #include "../../src/mesh.cpp"
 #include "../../src/shader.cpp"
 #include "../../src/cube.cpp"
+#include "../../src/camera.cpp"
 
 // Bibliotecas Auxiliares
 #include <iostream>

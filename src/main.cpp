@@ -41,14 +41,13 @@ void mainLoop() {
 
     Shader basicShader("resources/shaders/base.shader");
 
+    Camera mainCamera(
+        glm::vec3(0.0f, 0.0f, -5.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        60.0f
+    );
+
     Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
-
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view  = glm::mat4(1.0f);
-    glm::mat4 proj  = glm::mat4(1.0f);
-
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -5.0f));
-    proj = glm::perspective(glm::radians(60.0f), (float)(SCREEN_WIDTH/SCREEN_HEIGHT), 0.3f, 200.0f);
 
     float angle = 0.0f;
 
@@ -76,23 +75,13 @@ void mainLoop() {
             glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            model = glm::rotate(model, glm::radians(1.0f), glm::vec3(0.5f, 0.5f, 0.0f));
-
-            basicShader.enable();
-
-            int modelLoc = glGetUniformLocation(basicShader.uId, "model");
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-            int viewLoc = glGetUniformLocation(basicShader.uId, "view");
-            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-            int projLoc = glGetUniformLocation(basicShader.uId, "proj");
-            glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+            // View Matrix rotation is rotating the cube for some reason! TODO: Fix
+            mainCamera.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
 
             if (angle++ > 360) angle = 0;
 
             // Draw Elements
-            cube.draw();
+            cube.draw(mainCamera); //TODO: Singleton MainCamera
 
             // Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);
