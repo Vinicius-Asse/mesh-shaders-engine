@@ -1,0 +1,1 @@
+g++ -g src/main.cpp glad.o -o program.exe -I include/ -Llib/ -lmingw32 -lSDL2main -lSDL2
