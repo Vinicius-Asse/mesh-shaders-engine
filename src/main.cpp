@@ -53,22 +53,51 @@ void mainLoop() {
 
     unsigned int tm1 = 0, tm2 = 0, delta = 0;
 
+    float cameraSpeed = 0.1f;
+    glm::vec3 inputAxis = glm::vec3(0.0f, 0.0f, 0.0f);
+
     //Game Loop
     while(isRunning) {
         tm1 = SDL_GetTicks();
         delta = tm1 - tm2;
 
-        if (delta > 1000/120.0) {
+
+        if (delta > 1000/60.0) {
             //Handle events on queue
             while(SDL_PollEvent(&e) != 0){
                 switch(e.type) {
                 case SDL_QUIT:
                     isRunning = false;
                     break;
-                
+
+                case SDL_KEYDOWN:
+                    switch(e.key.keysym.sym) {
+                        case SDLK_w: inputAxis.z = -1; break;
+                        case SDLK_s: inputAxis.z =  1; break;
+                        case SDLK_a: inputAxis.x = -1; break;
+                        case SDLK_d: inputAxis.x =  1; break;
+                        default: break;
+                    }
+                    break;
+                case SDL_KEYUP:
+                    switch(e.key.keysym.sym) {
+                        case SDLK_ESCAPE: isRunning = false; break;
+
+                        case SDLK_w: if (inputAxis.z < 0) inputAxis.z =  0; break;
+                        case SDLK_s: if (inputAxis.z > 0) inputAxis.z =  0; break;
+                        case SDLK_a: if (inputAxis.x < 0) inputAxis.x =  0; break;
+                        case SDLK_d: if (inputAxis.x > 0) inputAxis.x =  0; break;
+                        default: break;
+                    }
+                    break;
                 default:
                     break;
                 }
+            }
+
+            // Move the Camera according to player's input
+            if (glm::length(inputAxis) != 0) {
+                mainCamera.translate(cameraSpeed * glm::normalize(inputAxis)); //TODO: Implementar metodo equivalente a Time.DeltaTime (Unity)
             }
 
             //Clear screen

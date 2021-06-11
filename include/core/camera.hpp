@@ -17,6 +17,7 @@ public:
     Camera(glm::vec3 position, glm::vec3 rotation, float fov);
     //~Camera();
 
+    void translate(glm::vec3 position);
     void rotate(glm::vec3 rotation);
 
     glm::mat4 getViewProjectionMatrix();

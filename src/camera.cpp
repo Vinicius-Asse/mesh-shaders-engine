@@ -34,6 +34,10 @@ glm::mat4 Camera::getMVPMatrix(glm::mat4 _model){
     return getViewProjectionMatrix() * _model;
 }
 
+void Camera::translate(glm::vec3 _position){
+    view = glm::translate(view, _position);
+}
+
 void Camera::rotate(glm::vec3 _rotation){
     view = glm::rotate(view, glm::radians(1.0f), _rotation);
 }
