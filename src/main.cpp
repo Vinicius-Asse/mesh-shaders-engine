@@ -44,7 +44,7 @@ void mainLoop() {
     Camera mainCamera(
         glm::vec3(0.0f, 0.0f, -5.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
-        60.0f
+        45.0f
     );
 
     Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
@@ -75,8 +75,7 @@ void mainLoop() {
             glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // View Matrix rotation is rotating the cube for some reason! TODO: Fix
-            mainCamera.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+            cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
 
             if (angle++ > 360) angle = 0;
 

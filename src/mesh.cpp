@@ -70,6 +70,10 @@ void Mesh::addAttribute(GLenum type, int count, bool normalized)
     currAttr++;
 }
 
-void Mesh::translate(glm::vec3 position) {
-    model = glm::translate(model, position);
+void Mesh::translate(glm::vec3 _rotation) {
+    model = glm::translate(model, _rotation);
+}
+
+void Mesh::rotate(glm::vec3 _rotation) {
+    model = glm::rotate(model, glm::radians(1.0f), _rotation);
 }

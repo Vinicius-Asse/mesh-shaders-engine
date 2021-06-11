@@ -35,6 +35,8 @@ public:
     unsigned int VAO, VBO, EBO;
 
     void translate(glm::vec3 position); //TODO: Abstrair transformações em classe (Transform)
+    void rotate(glm::vec3 rotation); //TODO: Abstrair transformações em classe (Transform)
+
 
     void bind();
     void unbind();
