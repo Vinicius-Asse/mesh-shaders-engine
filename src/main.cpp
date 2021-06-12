@@ -42,25 +42,21 @@ void mainLoop() {
     Shader basicShader("resources/shaders/base.shader");
 
     Camera mainCamera(
-        glm::vec3(0.0f, 0.0f, -5.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         45.0f
     );
 
-    Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
-
-    float angle = 0.0f;
+    Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 2.5f), glm::vec3(1.0f, 10.0f, 1.0f), &basicShader);
+    Cube cube2 = Cube::getInstance(glm::vec3(0.0f, 0.0f, -2.5f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
+    Cube cube3 = Cube::getInstance(glm::vec3(2.5f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
+    Cube cube4 = Cube::getInstance(glm::vec3(-2.5f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
 
     unsigned int tm1 = 0, tm2 = 0, delta = 0;
-
-    float cameraSpeed = 0.1f;
-    glm::vec3 inputAxis = glm::vec3(0.0f, 0.0f, 0.0f);
 
     //Game Loop
     while(isRunning) {
         tm1 = SDL_GetTicks();
         delta = tm1 - tm2;
-
 
         if (delta > 1000/60.0) {
             //Handle events on queue
@@ -69,47 +65,29 @@ void mainLoop() {
                 case SDL_QUIT:
                     isRunning = false;
                     break;
-
-                case SDL_KEYDOWN:
-                    switch(e.key.keysym.sym) {
-                        case SDLK_w: inputAxis.z = -1; break;
-                        case SDLK_s: inputAxis.z =  1; break;
-                        case SDLK_a: inputAxis.x = -1; break;
-                        case SDLK_d: inputAxis.x =  1; break;
-                        default: break;
-                    }
-                    break;
-                case SDL_KEYUP:
-                    switch(e.key.keysym.sym) {
-                        case SDLK_ESCAPE: isRunning = false; break;
-
-                        case SDLK_w: if (inputAxis.z < 0) inputAxis.z =  0; break;
-                        case SDLK_s: if (inputAxis.z > 0) inputAxis.z =  0; break;
-                        case SDLK_a: if (inputAxis.x < 0) inputAxis.x =  0; break;
-                        case SDLK_d: if (inputAxis.x > 0) inputAxis.x =  0; break;
-                        default: break;
-                    }
-                    break;
                 default:
                     break;
                 }
+
+                mainCamera.handleInputs(e, window);
             }
 
-            // Move the Camera according to player's input
-            if (glm::length(inputAxis) != 0) {
-                mainCamera.translate(cameraSpeed * glm::normalize(inputAxis)); //TODO: Implementar metodo equivalente a Time.DeltaTime (Unity)
-            }
+            mainCamera.update(window);
 
             //Clear screen
             glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
-
-            if (angle++ > 360) angle = 0;
+            cube2.rotate(glm::vec3(0.5f, -0.5f, 0.0f));
+            cube3.rotate(glm::vec3(-0.5f, 0.5f, 0.0f));
+            cube4.rotate(glm::vec3(-0.5f, -0.5f, 0.0f));
 
             // Draw Elements
             cube.draw(mainCamera); //TODO: Singleton MainCamera
+            cube2.draw(mainCamera); //TODO: Singleton MainCamera
+            cube3.draw(mainCamera); //TODO: Singleton MainCamera
+            cube4.draw(mainCamera); //TODO: Singleton MainCamera
 
             // Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);
