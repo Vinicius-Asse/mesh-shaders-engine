@@ -47,7 +47,10 @@ void mainLoop() {
         45.0f
     );
 
-    Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 2.5f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
+    Cube cube = Cube::getInstance(
+        glm::vec3(0.0f, 0.0f, 2.5f),
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        &basicShader);
 
     //GAME LOOP
     while(isRunning) {

@@ -1,27 +1,26 @@
 #include <core/cube.hpp>
 
 Cube Cube::getInstance(glm::vec3 _position, glm::vec3 _scale, Shader *shader) {
-    Vertex newVertices[36];
+    std::vector<Vertex> transformedVertices;
 
-    for (int i = 0; i < 36; i++) {
-        newVertices[i] = {
-            vertices[i].position[0] * _scale.x, //TODO: Implementar scale
-            vertices[i].position[1] * _scale.y, //TODO: Implementar scale
-            vertices[i].position[2] * _scale.z, //TODO: Implementar scale
-            vertices[i].color[0],
-            vertices[i].color[1],
-            vertices[i].color[2]
+    for (Vertex v : vertices) {
+        Vertex newVertice = {
+           v.position[0] * _scale.x,
+           v.position[1] * _scale.y,
+           v.position[2] * _scale.z,
+           v.color[0],
+           v.color[1],
+           v.color[2]
         };
+        transformedVertices.push_back(newVertice);
     }
 
-    Cube instance(indexes, 36, newVertices, 8, shader);
+    Cube instance(indexes, transformedVertices, shader);
     instance.translate(_position);
 
     return instance;
 }
 
-Cube::Cube(GLint indices[], 
-           unsigned int indicesCount,
-           Vertex *vertex,  
-           unsigned int vertexCount, 
-           Shader *shader) : Mesh(indices, indicesCount, vertex, vertexCount, shader) { }
+Cube::Cube(std::vector<GLint> indices, 
+           std::vector<Vertex> vertex,  
+           Shader *shader) : Mesh(indices, vertex, shader) { }

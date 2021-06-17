@@ -22,6 +22,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <vector>
 
 // Constantes
 #define SCREEN_WIDTH    640

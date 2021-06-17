@@ -7,6 +7,7 @@
 #include<glad/glad.h>
 #include<iostream>
 #include<string>
+#include<vector>
 
 struct Vertex
 {
@@ -29,7 +30,7 @@ private:
     void addAttribute(GLenum type, int count, bool normalized=false);
 
 public:
-    Mesh(GLint indices[], unsigned int indicesCount, Vertex *vertex, unsigned int vertexCount, Shader *shader);
+    Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *shader);
     ~Mesh();
 
     unsigned int VAO, VBO, EBO;

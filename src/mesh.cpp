@@ -1,8 +1,10 @@
 #include<core/mesh.hpp>
 
-Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned int vertexCount, Shader *_shader) {
+Mesh::Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *_shader) {
 
-    indicesCount = _indicesCount;
+    indicesCount = indices.size();
+
+    std::cout << std::to_string(indicesCount) << std::endl;
     shader = _shader;
     model = glm::mat4(1.0f);
     
@@ -16,10 +18,10 @@ Mesh::Mesh(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned
     bind();
 
     // Setting Up Data Buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertexCount, vertex, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertex.size(), vertex.data(), GL_STATIC_DRAW);
 
     // Setting Up Index Buffer
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLint) * indicesCount, indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLint) * indicesCount, indices.data(), GL_STATIC_DRAW);
 
     // Setting Positions Attribute
     addAttribute(GL_FLOAT, 3);

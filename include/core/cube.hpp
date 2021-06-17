@@ -2,8 +2,9 @@
 
 #include <core/mesh.hpp>
 #include <glm/glm.hpp>
+#include <vector>
 
-static const Vertex vertices[8] = {
+static const std::vector<Vertex> vertices = {
     //     POSITION       |        COLLOR     //
     { -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  1.0f },   // FRONT Upper Left
     {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  1.0f },   // FRONT Upper Right
@@ -15,7 +16,7 @@ static const Vertex vertices[8] = {
     {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f }    // BACK Botton Right
 };
 
-static GLint indexes[36] = {
+static std::vector<GLint> indexes = {
     //FRONT FACE
     0, 1, 2,
     1, 2, 3,
@@ -40,7 +41,7 @@ class Cube : public Mesh {
 
 public:
     Cube();
-    Cube(GLint indices[], unsigned int _indicesCount, Vertex *vertex, unsigned int vertexCount, Shader *shader);
+    Cube(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *shader);
     //~Cube();
 
     static Cube getInstance(glm::vec3 position, glm::vec3 scale, Shader *shader);
