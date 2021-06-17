@@ -38,62 +38,50 @@ void setupWindow(const char *title){
 void mainLoop() {
     SDL_Event e;
     bool isRunning = true;
+    double deltaTime = 0;
 
     Shader basicShader("resources/shaders/base.shader");
+    Shader floorShader("resources/shaders/floor.shader");
 
     Camera mainCamera(
-        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 5.0f),
         45.0f
     );
 
-    Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 2.5f), glm::vec3(1.0f, 10.0f, 1.0f), &basicShader);
-    Cube cube2 = Cube::getInstance(glm::vec3(0.0f, 0.0f, -2.5f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
-    Cube cube3 = Cube::getInstance(glm::vec3(2.5f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
-    Cube cube4 = Cube::getInstance(glm::vec3(-2.5f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
-
-    unsigned int tm1 = 0, tm2 = 0, delta = 0;
+    Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 2.5f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
 
     //Game Loop
     while(isRunning) {
-        tm1 = SDL_GetTicks();
-        delta = tm1 - tm2;
 
-        if (delta > 1000/60.0) {
-            //Handle events on queue
-            while(SDL_PollEvent(&e) != 0){
-                switch(e.type) {
-                case SDL_QUIT:
-                    isRunning = false;
-                    break;
-                default:
-                    break;
-                }
+        // Lock Framerate 
+        timeControl(&deltaTime);
 
-                mainCamera.handleInputs(e, window);
+        //Handle events on queue
+        while(SDL_PollEvent(&e) != 0){
+            switch(e.type) {
+            case SDL_QUIT:
+                isRunning = false;
+                break;
+            default:
+                break;
             }
 
-            mainCamera.update(window);
-
-            //Clear screen
-            glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
-            cube2.rotate(glm::vec3(0.5f, -0.5f, 0.0f));
-            cube3.rotate(glm::vec3(-0.5f, 0.5f, 0.0f));
-            cube4.rotate(glm::vec3(-0.5f, -0.5f, 0.0f));
-
-            // Draw Elements
-            cube.draw(mainCamera); //TODO: Singleton MainCamera
-            cube2.draw(mainCamera); //TODO: Singleton MainCamera
-            cube3.draw(mainCamera); //TODO: Singleton MainCamera
-            cube4.draw(mainCamera); //TODO: Singleton MainCamera
-
-            // Swap Front Buffer and Back Buffer
-            SDL_GL_SwapWindow(window);
-
-            tm2 = tm1;
+            mainCamera.handleInputs(e, window);
         }
+
+        mainCamera.update(window);
+
+        //Clear screen
+        glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+
+        // Draw Elements
+        cube.draw(mainCamera); //TODO: Singleton MainCamera
+
+        // Swap Front Buffer and Back Buffer
+        SDL_GL_SwapWindow(window);
     }
 }
 
@@ -102,4 +90,25 @@ void finishError(std::string err_msg) {
     fflush(stdout);
     //SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", err_msg.c_str(), NULL);
     SDL_Quit();
+}
+
+void timeControl(double *outDeltaTime){
+	static int frames = 0;
+	static unsigned int terminoFrame = 0, inicioFrame = 0, timerFrame = 0;
+	
+	frames ++;
+	inicioFrame = SDL_GetTicks();
+	*outDeltaTime = (double)(inicioFrame - terminoFrame) / 100;
+	
+	if (SDL_TICKS_PASSED(inicioFrame, timerFrame + 1000)){
+		if (0) printf ("%d FPS\n", frames);
+		frames = 0;
+		timerFrame = inicioFrame;
+	}
+	
+	terminoFrame = inicioFrame;
+	
+	if (*outDeltaTime < 1000 / 300) {
+		SDL_Delay(1000 / 300 - *outDeltaTime);
+	}
 }

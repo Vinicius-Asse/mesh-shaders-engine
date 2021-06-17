@@ -41,6 +41,7 @@ void Camera::handleInputs(SDL_Event e, SDL_Window *window) {
                 case SDLK_d: inputAxis.x =  1; break;
                 case SDLK_w: inputAxis.y = -1; break;
                 case SDLK_s: inputAxis.y =  1; break;
+                case SDLK_LSHIFT: running = true; break;
                 default: break;
             }
             break;
@@ -50,6 +51,7 @@ void Camera::handleInputs(SDL_Event e, SDL_Window *window) {
                 case SDLK_d: if (inputAxis.x > 0) inputAxis.x = 0; break;
                 case SDLK_w: if (inputAxis.y < 0) inputAxis.y = 0; break;
                 case SDLK_s: if (inputAxis.y > 0) inputAxis.y = 0; break;
+                case SDLK_LSHIFT: running = false; break;
                 case SDLK_ESCAPE: mouseEnabled = false; SDL_ShowCursor(1); break;
                 default: break;
             }
@@ -82,7 +84,7 @@ void Camera::update(SDL_Window *window) {
         glm::vec3 normalizedMov = glm::normalize((perpendicular * -inputAxis.x) + ( orientation  * -inputAxis.y));
 
         if (glm::length(inputAxis) != 0) {
-            position += normalizedMov * moveSpeed;
+            position += normalizedMov * (moveSpeed * (running? 2.5f : 1.0f));
         }
 
         SDL_WarpMouseInWindow(window, 640 / 2, 480 / 2);

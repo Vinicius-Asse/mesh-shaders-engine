@@ -16,6 +16,7 @@ private:
     glm::vec2 inputAxis   = glm::vec3(0.0f, 0.0f, 0.0f);
 
     float moveSpeed;
+    bool running = false;
     bool mouseEnabled = false;
 
 public:

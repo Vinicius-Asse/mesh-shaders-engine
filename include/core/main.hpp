@@ -31,6 +31,8 @@
 void setupWindow(const char*);
 void finishError(std::string);
 void mainLoop();
+void timeControl(double*);
+
 
 
 #endif
