@@ -1,8 +1,12 @@
 #include <core/camera.hpp>
 
+Camera* Camera::MainCamera = nullptr;
+
 Camera::Camera(glm::vec3 _position, float _fov) {
     position = _position;
     moveSpeed = 0.1f;
+
+    if (MainCamera == nullptr) MainCamera = this;
 }
 
 glm::mat4 Camera::getViewProjectionMatrix(){
@@ -89,4 +93,8 @@ void Camera::update(SDL_Window *window) {
 
         SDL_WarpMouseInWindow(window, 640 / 2, 480 / 2);
     }
+}
+
+void Camera::setActive() {
+    MainCamera = this;
 }

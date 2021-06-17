@@ -41,7 +41,7 @@ public:
     void bind();
     void unbind();
 
-    void draw(Camera camera);
+    void draw();
 };
 
 #endif

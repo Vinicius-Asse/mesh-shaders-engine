@@ -41,22 +41,21 @@ void mainLoop() {
     double deltaTime = 0;
 
     Shader basicShader("resources/shaders/base.shader");
-    Shader floorShader("resources/shaders/floor.shader");
 
-    Camera mainCamera(
+    Camera camera(
         glm::vec3(0.0f, 1.0f, 5.0f),
         45.0f
     );
 
     Cube cube = Cube::getInstance(glm::vec3(0.0f, 0.0f, 2.5f), glm::vec3(1.0f, 1.0f, 1.0f), &basicShader);
 
-    //Game Loop
+    //GAME LOOP
     while(isRunning) {
 
-        // Lock Framerate 
+        // Framerate Control 
         timeControl(&deltaTime);
 
-        //Handle events on queue
+        // INPUT HANDLER
         while(SDL_PollEvent(&e) != 0){
             switch(e.type) {
             case SDL_QUIT:
@@ -66,22 +65,27 @@ void mainLoop() {
                 break;
             }
 
-            mainCamera.handleInputs(e, window);
+            camera.handleInputs(e, window);
         }
 
-        mainCamera.update(window);
+        // UPDATE
+        {
+            camera.update(window);
+            cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+        }
 
-        //Clear screen
-        glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+        // DRAW
+        {
+            //BEGIN DRAW: Clear Screen
+            glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Draw Elements
-        cube.draw(mainCamera); //TODO: Singleton MainCamera
+            cube.draw();
 
-        // Swap Front Buffer and Back Buffer
-        SDL_GL_SwapWindow(window);
+            //END DRAW: Swap Front Buffer and Back Buffer
+            SDL_GL_SwapWindow(window);
+        }
     }
 }
 

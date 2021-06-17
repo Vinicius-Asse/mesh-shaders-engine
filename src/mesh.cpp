@@ -38,8 +38,9 @@ Mesh::~Mesh() {
     glDeleteBuffers(1, &EBO);
 }
 
-void Mesh::draw(Camera camera) {
-    glm::mat4 mvpMatrix = camera.getMVPMatrix(model);
+void Mesh::draw() {
+    Camera* camera = Camera::MainCamera;
+    glm::mat4 mvpMatrix = camera->getMVPMatrix(model);
     shader->enable();
     int mvpLoc = glGetUniformLocation(shader->uId, "MVP");
     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));

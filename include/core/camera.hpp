@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/perpendicular.hpp>
 
+
 class Camera {
 private:
     glm::vec3 position;
@@ -20,10 +21,12 @@ private:
     bool mouseEnabled = false;
 
 public:
-
+    static Camera* MainCamera;
+    
     Camera(glm::vec3 position, float fov);
     //~Camera();
 
+    void setActive();
     void update(SDL_Window *window);
     void handleInputs(SDL_Event e, SDL_Window *window);
 
