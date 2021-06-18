@@ -15,7 +15,7 @@ struct Vertex
     GLfloat color[3];
 };
 
-class Mesh 
+class Mesh
 {
 private:
     Shader *shader;

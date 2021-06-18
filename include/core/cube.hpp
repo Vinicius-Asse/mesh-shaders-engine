@@ -45,4 +45,6 @@ public:
     //~Cube();
 
     static Cube getInstance(glm::vec3 position, glm::vec3 scale, Shader *shader);
+
+    void onUpdate();
 };

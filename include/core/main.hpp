@@ -12,6 +12,8 @@
 #include <glm/gtx/string_cast.hpp>
 
 // Classes de Abstracoes
+#include "../../src/system/entity_system.cpp"
+#include "../../src/entity.cpp"
 #include "../../src/mesh.cpp"
 #include "../../src/shader.cpp"
 #include "../../src/cube.cpp"

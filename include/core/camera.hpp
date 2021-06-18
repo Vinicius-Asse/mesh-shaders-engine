@@ -6,8 +6,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/perpendicular.hpp>
 
+#include <core/entity.hpp>
 
-class Camera {
+
+class Camera : public Entity {
 private:
     glm::vec3 position;
 
@@ -22,11 +24,12 @@ private:
 
 public:
     static Camera* MainCamera;
-    
+
     Camera(glm::vec3 position, float fov);
     //~Camera();
 
     void setActive();
+    void onUpdate();
     void update(SDL_Window *window);
     void handleInputs(SDL_Event e, SDL_Window *window);
 

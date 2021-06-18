@@ -4,7 +4,6 @@ Mesh::Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *_shad
 
     indicesCount = indices.size();
 
-    std::cout << std::to_string(indicesCount) << std::endl;
     shader = _shader;
     model = glm::mat4(1.0f);
     
