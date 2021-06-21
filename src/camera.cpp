@@ -4,6 +4,7 @@ Camera* Camera::MainCamera = nullptr;
 
 Camera::Camera(glm::vec3 _position, float _fov) : Entity() {
     position = _position;
+    fov = _fov;
     moveSpeed = 0.1f;
 
     if (MainCamera == nullptr) MainCamera = this;
@@ -21,7 +22,7 @@ glm::mat4 Camera::getViewProjectionMatrix(){
         glm::radians(80.0f), 
         (float) (640/480),
         0.3f,
-        200.0f
+        fov
     );
 
     return projection * view;
