@@ -5,7 +5,7 @@ Camera* Camera::MainCamera = nullptr;
 Camera::Camera(glm::vec3 _position, float _fov) : Entity() {
     position = _position;
     fov = _fov;
-    moveSpeed = 0.1f;
+    moveSpeed = 1.0f;
 
     if (MainCamera == nullptr) MainCamera = this;
 }
@@ -72,14 +72,14 @@ void Camera::onUpdate() {
 
 void Camera::update(SDL_Window *window) {
     if (mouseEnabled) {
-        float mouseSense = 50.0f; //TODO: Parametrizar sensibilidade
+        float mouseSense = 350.0f; //TODO: Parametrizar sensibilidade
 
         //TODO: Organizar movimentacao da camera
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
 
-        float deltaX = mouseSense * (float)(mouseY - 480 / 2) / 480;
-        float deltaY = mouseSense * (float)(mouseX - 640 / 2) / 640;
+        float deltaX = TimeDeltaTime * mouseSense * (float)(mouseY - 480 / 2) / 480;
+        float deltaY = TimeDeltaTime * mouseSense * (float)(mouseX - 640 / 2) / 640;
 
         glm::vec3 newOrientation = glm::rotate(orientation, glm::radians(-deltaX), glm::normalize(glm::cross(orientation, up)));
 
@@ -93,7 +93,7 @@ void Camera::update(SDL_Window *window) {
         glm::vec3 normalizedMov = glm::normalize((perpendicular * -inputAxis.x) + ( orientation  * -inputAxis.y));
 
         if (glm::length(inputAxis) != 0) {
-            position += normalizedMov * (moveSpeed * (running? 2.5f : 1.0f));
+            position += normalizedMov * ((moveSpeed * (float) TimeDeltaTime) * (running? 2.5f : 1.0f));
         }
 
         SDL_WarpMouseInWindow(window, 640 / 2, 480 / 2);

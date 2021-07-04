@@ -33,6 +33,9 @@ void setupWindow(const char *title){
     if (!window || !context) finishError("Nao foi possivel inicializar a Janela");
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    SDL_GL_SetSwapInterval(0);
 }
 
 void mainLoop() {
@@ -54,13 +57,19 @@ void mainLoop() {
         glm::vec3(1.0f, 1.0f, 1.0f),
         &basicShader);
 
+    Sphere sphere = Sphere::getInstance(
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        16, 8,
+        &basicShader);
+
     entitySystem.callStart();
 
     //GAME LOOP
     while(isRunning) {
 
         // Framerate Control 
-        timeControl(&deltaTime);
+        timeControl(&TimeDeltaTime);
 
         // INPUT HANDLER
         while(SDL_PollEvent(&e) != 0){
@@ -80,6 +89,7 @@ void mainLoop() {
             entitySystem.callUpdate();
             camera.update(window);
             cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+            sphere.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
         }
 
 
@@ -90,6 +100,7 @@ void mainLoop() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             cube.draw();
+            sphere.draw();
 
             //END DRAW: Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);

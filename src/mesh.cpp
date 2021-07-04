@@ -77,5 +77,5 @@ void Mesh::translate(glm::vec3 _rotation) {
 }
 
 void Mesh::rotate(glm::vec3 _rotation) {
-    model = glm::rotate(model, glm::radians(1.0f), _rotation);
+    model = glm::rotate(model, glm::radians(10.0f * (float) TimeDeltaTime), _rotation);
 }

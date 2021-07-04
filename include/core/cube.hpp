@@ -18,23 +18,23 @@ static const std::vector<Vertex> vertices = {
 
 static std::vector<GLint> indexes = {
     //FRONT FACE
-    0, 1, 2,
+    0, 2, 1,
     1, 2, 3,
     //BACK FACE
     4, 5, 6,
-    5, 6, 7,
+    5, 7, 6,
     //UPPER FACE
     0, 1, 4,
     4, 1, 5,
     //BOTTON FACE
-    2, 3, 6,
-    6, 3, 7,
+    2, 6, 3,
+    6, 7, 3,
     //RIGHT FACE
     1, 3, 7,
     1, 7, 5,
     //LEFT FACE
-    0, 2, 6,
-    0, 6, 4
+    0, 6, 2,
+    0, 4, 6
 };
 
 class Cube : public Mesh {
