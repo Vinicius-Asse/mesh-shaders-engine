@@ -43,8 +43,6 @@ void mainLoop() {
     bool isRunning = true;
     double deltaTime = 0;
 
-    EntitySystem entitySystem;
-
     Shader basicShader("resources/shaders/base.shader");
 
     Camera camera(
@@ -62,8 +60,6 @@ void mainLoop() {
         glm::vec3(1.0f, 1.0f, 1.0f),
         16, 8,
         &basicShader);
-
-    entitySystem.callStart();
 
     //GAME LOOP
     while(isRunning) {
@@ -86,7 +82,6 @@ void mainLoop() {
 
         // UPDATE
         {
-            entitySystem.callUpdate();
             camera.update(window);
             cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
             sphere.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
