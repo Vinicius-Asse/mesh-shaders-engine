@@ -2,7 +2,7 @@
 
 Camera* Camera::MainCamera = nullptr;
 
-Camera::Camera(glm::vec3 _position, float _fov) : Entity() {
+Camera::Camera(glm::vec3 _position, float _fov) {
     position = _position;
     fov = _fov;
     moveSpeed = 1.0f;
@@ -64,10 +64,6 @@ void Camera::handleInputs(SDL_Event e, SDL_Window *window) {
     default:
         break;
     }
-}
-
-void Camera::onUpdate() {
-    //update(window);
 }
 
 void Camera::update(SDL_Window *window) {
