@@ -11,7 +11,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-double TimeDeltaTime = 0;
+// Variaveis Globais
+double TimeDeltaTime;
 
 // Classes de Abstracoes
 #include "../../src/mesh.cpp"
@@ -35,7 +36,7 @@ double TimeDeltaTime = 0;
 void setupWindow(const char*);
 void finishError(std::string);
 void mainLoop();
-void timeControl(double*);
+double timeControl();
 
 
 

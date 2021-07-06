@@ -41,7 +41,6 @@ void setupWindow(const char *title){
 void mainLoop() {
     SDL_Event e;
     bool isRunning = true;
-    double deltaTime = 0;
 
     Shader basicShader("resources/shaders/base.shader");
 
@@ -56,16 +55,16 @@ void mainLoop() {
         &basicShader);
 
     Sphere sphere = Sphere::getInstance(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(1.0f, 1.0f, 1.0f),
-        16, 8,
+        glm::vec3(0.0f, 1.25f, 2.5f),
+        glm::vec3(1.5f, 1.5f, 1.5f),
+        32, 16,
         &basicShader);
 
     //GAME LOOP
     while(isRunning) {
 
         // Framerate Control 
-        timeControl(&TimeDeltaTime);
+        TimeDeltaTime = timeControl();
 
         // INPUT HANDLER
         while(SDL_PollEvent(&e) != 0){
@@ -83,8 +82,8 @@ void mainLoop() {
         // UPDATE
         {
             camera.update(window);
-            cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
-            sphere.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+            //cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+            //sphere.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
         }
 
 
@@ -110,13 +109,13 @@ void finishError(std::string err_msg) {
     SDL_Quit();
 }
 
-void timeControl(double *outDeltaTime){
+double timeControl(){
 	static int frames = 0;
 	static unsigned int terminoFrame = 0, inicioFrame = 0, timerFrame = 0;
 	
 	frames ++;
 	inicioFrame = SDL_GetTicks();
-	*outDeltaTime = (double)(inicioFrame - terminoFrame) / 100;
+	double deltaTime = (double)(inicioFrame - terminoFrame) / 100;
 	
 	if (SDL_TICKS_PASSED(inicioFrame, timerFrame + 1000)){
 		if (0) printf ("%d FPS\n", frames);
@@ -126,7 +125,9 @@ void timeControl(double *outDeltaTime){
 	
 	terminoFrame = inicioFrame;
 	
-	if (*outDeltaTime < 1000 / 300) {
-		SDL_Delay(1000 / 300 - *outDeltaTime);
+	if (deltaTime < 1000 / 400) {
+		SDL_Delay(1000 / 400 - deltaTime);
 	}
+
+    return deltaTime;
 }
