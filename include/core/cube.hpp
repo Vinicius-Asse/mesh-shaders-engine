@@ -5,15 +5,36 @@
 #include <vector>
 
 static const std::vector<Vertex> vertices = {
-    //     POSITION       |        COLLOR     //
-    { -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  1.0f },   // FRONT Upper Left
-    {  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  1.0f },   // FRONT Upper Right
-    { -0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  0.0f },   // FRONT Botton Left
-    {  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f },   // FRONT Botton Right
-    { -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  1.0f },   // BACK Upper Left
-    {  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  1.0f },   // BACK Upper Right
-    { -0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  0.0f },   // BACK Botton Left
-    {  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f }    // BACK Botton Right
+    //     POSITION       |        COLLOR      |     NORMALS     //
+    { -0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Upper Left
+    {  0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Upper Right
+    { -0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Botton Left
+    {  0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Botton Right
+
+    { -0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Upper Left
+    {  0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Upper Right
+    { -0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Botton Left
+    {  0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Botton Right
+
+    { -0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f },   // UPPER Upper Left
+    {  0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f },   // UPPER Upper Right
+    { -0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f },   // UPPER Botton Left
+    {  0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f },   // UPPER Botton Right
+
+    { -0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f,-1.0f, 0.0f },   // BOTTON Upper Left
+    {  0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f,-1.0f, 0.0f },   // BOTTON Upper Right
+    { -0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f,-1.0f, 0.0f },   // BOTTON Botton Left
+    {  0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f,-1.0f, 0.0f },   // BOTTON Botton Right
+
+    { -0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f },   // LEFT Upper Left
+    { -0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f },   // LEFT Upper Right
+    { -0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f },   // LEFT Botton Left
+    { -0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f, -1.0f, 0.0f, 0.0f },   // LEFT Botton Right
+
+    {  0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  1.0f, 0.0f, 0.0f },   // LEFT Upper Left
+    {  0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  1.0f, 0.0f, 0.0f },   // LEFT Upper Right
+    {  0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  1.0f, 0.0f, 0.0f },   // LEFT Botton Left
+    {  0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  1.0f, 0.0f, 0.0f },   // LEFT Botton Right
 };
 
 static std::vector<GLint> indexes = {
@@ -24,17 +45,17 @@ static std::vector<GLint> indexes = {
     4, 5, 6,
     5, 7, 6,
     //UPPER FACE
-    0, 1, 4,
-    4, 1, 5,
+    8, 9, 10,
+    9, 11, 10,
     //BOTTON FACE
-    2, 6, 3,
-    6, 7, 3,
-    //RIGHT FACE
-    1, 3, 7,
-    1, 7, 5,
+    12, 14, 13,
+    13, 14, 15,
     //LEFT FACE
-    0, 6, 2,
-    0, 4, 6
+    16, 18, 17,
+    17, 18, 19,
+    //RIGHT FACE
+    20, 21, 22,
+    21, 23, 22
 };
 
 class Cube : public Mesh {

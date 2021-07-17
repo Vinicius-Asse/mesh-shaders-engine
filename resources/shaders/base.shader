@@ -3,15 +3,19 @@
 
 layout(location = 0) in vec4 vPos;
 layout(location = 1) in vec4 aCol;
+layout(location = 2) in vec4 aNorm;
 
 out vec4 vCol;
+out vec4 vNorm;
 
 uniform mat4 MVP;
 
-void main(){
-
+void main()
+{
     gl_Position = MVP * vPos;
+
     vCol = aCol;
+    vNorm = aNorm;
 }
 
 #shader fragment
@@ -19,8 +23,18 @@ void main(){
 
 out vec4 color; 
 
-in vec4 vCol; 
+in vec4 vCol;
+in vec4 vNorm;
 
-void main(){
-    color = vCol;
+uniform vec4 ligthDir;
+uniform vec4 ligthCol;
+
+void main()
+{
+    float ambient = 0.25f;
+    vec3 normal = normalize(vNorm.xyz);
+    vec3 ligthDirection = normalize(-ligthDir.xyz);
+    float diffuse = max(dot(normal, ligthDirection), 0.0f);
+
+    color = vCol * ligthCol * (diffuse + ambient);
 }

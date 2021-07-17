@@ -14,7 +14,10 @@ Sphere Sphere::getInstance(glm::vec3 _position, glm::vec3 _scale, int sectorCoun
            v.position[2] * _scale.z,
            v.color[0],
            v.color[1],
-           v.color[2]
+           v.color[2],
+           v.normals[0],
+           v.normals[1],
+           v.normals[2]
         };
         transformedVertices.push_back(newVertice);
     }
@@ -33,6 +36,7 @@ std::vector<Vertex> Sphere::getVertices(float r, int sectorCount, int stackCount
     std::vector<Vertex> vertices;
 
     float x, y, z, xy;
+    float nx, ny, nz, lengthInv = 1.0f / r;    // vertex normal
 
     float sectorStep = 2 * MATH_PI / sectorCount;
     float stackStep = MATH_PI / stackCount;
@@ -49,12 +53,21 @@ std::vector<Vertex> Sphere::getVertices(float r, int sectorCount, int stackCount
             // vertex position (x, y, z)
             x = xy * cosf(sectorAngle);                 // r * cos(u) * cos(v)
             y = xy * sinf(sectorAngle);                 // r * cos(u) * sin(v)
+
+            // vertex colors (r, g, b)
+            float r = 1.0f; //map(x, -1.0f, 1.0f, 0, 1.0f);
+            float g = 1.0f; //map(y, -1.0f, 1.0f, 0, 1.0f);
+            float b = 1.0f; //map(z, -1.0f, 1.0f, 0, 1.0f);
+
+            // normalized vertex normal (nx, ny, nz)
+            nx = x * lengthInv;
+            ny = y * lengthInv;
+            nz = z * lengthInv;
             
             Vertex v = {
                 x,    y,    z,   // POSITION
-                map(x, -1.0f, 1.0f, 0, 1.0f),
-                map(y, -1.0f, 1.0f, 0, 1.0f),
-                map(z, -1.0f, 1.0f, 0, 1.0f)
+                r,    g,    b,   // COLLORS
+                nx,   ny,   nz   // NORMALS
             };
 
             vertices.push_back(v);

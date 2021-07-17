@@ -50,12 +50,12 @@ void mainLoop() {
     );
 
     Cube cube = Cube::getInstance(
-        glm::vec3(0.0f, 0.0f, 2.5f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(1.0f, 1.0f, 1.0f),
         &basicShader);
 
     Sphere sphere = Sphere::getInstance(
-        glm::vec3(0.0f, 1.25f, 2.5f),
+        glm::vec3(0.0f, 1.25f, 0.0f),
         glm::vec3(1.5f, 1.5f, 1.5f),
         32, 16,
         &basicShader);

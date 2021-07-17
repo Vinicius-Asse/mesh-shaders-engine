@@ -23,6 +23,9 @@ private:
 public:
     static Camera* MainCamera;
 
+    glm::vec3 ligthDir    = glm::vec3(0.2f, -0.8f, -0.6f);
+    glm::vec3 ligthColor  = glm::vec3(1.0f, 1.0f, 1.0f);
+
     Camera(glm::vec3 position, float fov);
     //~Camera();
 

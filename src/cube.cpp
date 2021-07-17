@@ -10,7 +10,10 @@ Cube Cube::getInstance(glm::vec3 _position, glm::vec3 _scale, Shader *shader) {
            v.position[2] * _scale.z,
            v.color[0],
            v.color[1],
-           v.color[2]
+           v.color[2],
+           v.normals[0],
+           v.normals[1],
+           v.normals[2]
         };
         transformedVertices.push_back(newVertice);
     }

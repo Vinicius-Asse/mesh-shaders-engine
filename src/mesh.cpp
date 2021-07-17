@@ -26,6 +26,10 @@ Mesh::Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *_shad
     // Setting Collor Attribute
     addAttribute(GL_FLOAT, 3);
 
+    // Setting Normal Attribute
+    addAttribute(GL_FLOAT, 3);
+
+
 
     unbind();
 }
@@ -39,9 +43,23 @@ Mesh::~Mesh() {
 void Mesh::draw() {
     Camera* camera = Camera::MainCamera;
     glm::mat4 mvpMatrix = camera->getMVPMatrix(model);
+    glm::vec3 ligthDir = camera->ligthDir;
+    glm::vec3 ligthCol = camera->ligthColor;
+
     shader->enable();
+
+    // MVP MATRIX UNIFORM
     int mvpLoc = glGetUniformLocation(shader->uId, "MVP");
     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+
+    // LIGTH DIRECTION UNIFORM
+    int ligthDirLoc = glGetUniformLocation(shader->uId, "ligthDir");
+    glUniform4f(ligthDirLoc, ligthDir.x, ligthDir.y, ligthDir.z, 1.0f);
+
+    // LIGTH COLOR UNIFORM
+    int ligthColLoc = glGetUniformLocation(shader->uId, "ligthCol");
+    glUniform4f(ligthColLoc, ligthCol.x, ligthCol.y, ligthCol.z, 1.0f);
+
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_INT, 0);
 }

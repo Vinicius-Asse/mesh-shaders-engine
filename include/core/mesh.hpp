@@ -13,6 +13,7 @@ struct Vertex
 {
     GLfloat position[3];
     GLfloat color[3];
+    GLfloat normals[3];
 };
 
 class Mesh
