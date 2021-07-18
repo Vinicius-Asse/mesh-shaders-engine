@@ -31,7 +31,7 @@ void Program::start() {
 
     camera = new Camera(
         glm::vec3(0.0f, 0.0f, 2.5f),
-        60.0f
+        60.0f, window
     );
 
     cube = Cube::getInstance(
@@ -46,14 +46,14 @@ void Program::start() {
  * Método Executado no Inicio de Cada Frame
 **/
 void Program::input(SDL_Event* e) {
-    camera->handleInputs(*e, window);
+    camera->handleInputs(*e);
 }
 
 /***
  * Método Executado Toda Frame
 **/
 void Program::update() {
-    camera->update(window);
+    camera->update();
 }
 
 /***

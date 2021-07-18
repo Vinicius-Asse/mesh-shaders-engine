@@ -61,6 +61,12 @@ void mainLoop() {
             case SDL_QUIT:
                 running = false;
                 break;
+            case SDL_WINDOWEVENT:
+                if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+                    int width, height;
+                    SDL_GetWindowSize(window, &width, &height);
+                    glViewport(0, 0, width, height);
+                }
             default:
                 break;
             }

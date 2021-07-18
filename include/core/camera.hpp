@@ -23,15 +23,16 @@ private:
 public:
     static Camera* MainCamera;
 
+    SDL_Window* window;
     glm::vec3 ligthDir    = glm::vec3(0.2f, -0.8f, -0.6f);
     glm::vec3 ligthColor  = glm::vec3(1.0f, 1.0f, 1.0f);
 
-    Camera(glm::vec3 position, float fov);
+    Camera(glm::vec3 position, float fov, SDL_Window *window);
     //~Camera();
 
     void setActive();
-    void update(SDL_Window *window);
-    void handleInputs(SDL_Event e, SDL_Window *window);
+    void update();
+    void handleInputs(SDL_Event e);
 
     glm::mat4 getViewProjectionMatrix();
     glm::mat4 getMVPMatrix(glm::mat4 model);

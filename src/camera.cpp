@@ -2,10 +2,11 @@
 
 Camera* Camera::MainCamera = nullptr;
 
-Camera::Camera(glm::vec3 _position, float _fov) {
+Camera::Camera(glm::vec3 _position, float _fov, SDL_Window *_window) {
     position = _position;
     fov = _fov;
     moveSpeed = 1.0f;
+    window = _window;
 
     if (MainCamera == nullptr) MainCamera = this;
 }
@@ -18,9 +19,12 @@ glm::mat4 Camera::getViewProjectionMatrix(){
         up
     );
 
+    int width, height;
+    SDL_GetWindowSize(window, &width, &height);
+
     glm::mat4 projection = glm::perspective(
         glm::radians(fov), 
-        (float) (640/480),
+        (float) (width/height),
         0.3f,
         200.0f
     );
@@ -32,12 +36,16 @@ glm::mat4 Camera::getMVPMatrix(glm::mat4 _model){
     return getViewProjectionMatrix() * _model;
 }
 
-void Camera::handleInputs(SDL_Event e, SDL_Window *window) {
+void Camera::handleInputs(SDL_Event e) {
+
+    int screenWidth, screenHeight;
+    SDL_GetWindowSize(window, &screenWidth, &screenHeight);
+
     switch (e.type) {
         case SDL_MOUSEBUTTONDOWN:
             if (e.button.button == SDL_BUTTON_LEFT) {
                 SDL_ShowCursor(0);
-                SDL_WarpMouseInWindow(window, 640 / 2, 480 / 2);
+                SDL_WarpMouseInWindow(window, screenWidth / 2, screenHeight / 2);
                 mouseEnabled = true;
             }
         case SDL_KEYDOWN:
@@ -66,7 +74,7 @@ void Camera::handleInputs(SDL_Event e, SDL_Window *window) {
     }
 }
 
-void Camera::update(SDL_Window *window) {
+void Camera::update() {
     if (mouseEnabled) {
         float mouseSense = 350.0f; //TODO: Parametrizar sensibilidade
 
@@ -74,8 +82,11 @@ void Camera::update(SDL_Window *window) {
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
 
-        float deltaX = TimeDeltaTime * mouseSense * (float)(mouseY - 480 / 2) / 480;
-        float deltaY = TimeDeltaTime * mouseSense * (float)(mouseX - 640 / 2) / 640;
+        int screenWidth, screenHeight;
+        SDL_GetWindowSize(window, &screenWidth, &screenHeight);
+
+        float deltaX = TimeDeltaTime * mouseSense * (float)(mouseY - screenHeight / 2) / screenHeight;
+        float deltaY = TimeDeltaTime * mouseSense * (float)(mouseX - screenWidth / 2) / screenWidth;
 
         glm::vec3 newOrientation = glm::rotate(orientation, glm::radians(-deltaX), glm::normalize(glm::cross(orientation, up)));
 
@@ -92,7 +103,7 @@ void Camera::update(SDL_Window *window) {
             position += normalizedMov * ((moveSpeed * (float) TimeDeltaTime) * (running? 2.5f : 1.0f));
         }
 
-        SDL_WarpMouseInWindow(window, 640 / 2, 480 / 2);
+        SDL_WarpMouseInWindow(window, screenWidth / 2, screenHeight / 2);
     }
 }
 
