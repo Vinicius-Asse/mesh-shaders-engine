@@ -31,7 +31,7 @@ double TimeDeltaTime;
 
 // Constantes
 #define SCREEN_WIDTH    1280
-#define SCREEN_HEIGHT   720
+#define SCREEN_HEIGHT   960
 
 // Definicao de Funcoes
 void setupWindow(const char*);

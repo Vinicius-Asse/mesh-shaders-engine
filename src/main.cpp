@@ -3,6 +3,7 @@
     SDL_Window      *window;
     SDL_GLContext    context;
     bool             running;
+    const char*      title;
  
 int main(int argc, char** argv) {
 
@@ -110,7 +111,9 @@ double timeControl(){
 	double deltaTime = (double)(inicioFrame - terminoFrame) / 100;
 	
 	if (SDL_TICKS_PASSED(inicioFrame, timerFrame + 1000)){
-		if (0) printf ("%d FPS\n", frames);
+        std::string title = "Matching Cubes (" + std::to_string(frames) + " FPS)";
+        SDL_SetWindowTitle(window, title.c_str());
+
 		frames = 0;
 		timerFrame = inicioFrame;
 	}
