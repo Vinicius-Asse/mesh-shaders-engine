@@ -1,10 +1,18 @@
 #include<core/program.hpp>
 
-Sphere*** instantiateSpheres(int, int, int, Shader*);
+struct Point
+{
+    glm::vec3 position;
+    float value;
+    bool visible;
+};
 
-    Camera*  camera;
-    Cube*    cube;
-    Sphere***spheres;
+Point*** instantiatePoints(int countX, int countY, int countZ, bool visible, Shader* shader);
+
+    Camera*             camera;
+    Cube*               cube;
+    Point***            points;
+    std::vector<Sphere> spheres;
 
 
 /***
@@ -20,7 +28,6 @@ Program::Program(SDL_Window* _window) {
  * Método Executado Quando o Programa é Criado
 **/
 void Program::onCreate() {
-
 }
 
 /***
@@ -36,10 +43,11 @@ void Program::start() {
 
     cube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.5f, 0.5f, 0.5f),
+        glm::vec3(1.0f, 1.0f, 1.0f),
         baseShader);
 
-    spheres = instantiateSpheres(10, 10, 10, baseShader);
+    int pCount = 10;
+    points = instantiatePoints(pCount, pCount, pCount, true, baseShader);
 }
 
 /***
@@ -62,33 +70,39 @@ void Program::update() {
 void Program::draw() {
     cube->draw();
 
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            for (int k = 0; k < 10; k++) {
-                spheres[i][j][k].draw();
-            }
-        }
+    for (Sphere s : spheres) {
+        s.draw();
     }
 }
 
 
-Sphere*** instantiateSpheres(int countX, int countY, int countZ, Shader *shader) {
-    Sphere*** spheres = (Sphere***) malloc(sizeof(Sphere**) * countX);
+Point*** instantiatePoints(int countX, int countY, int countZ, bool visible, Shader * shader) {
+    Point*** points = (Point***) malloc(sizeof(Point**) * countX);
     float scale = 0.3f;
 
     for (int i = 0; i < countX; i++) {
-        spheres[i] = (Sphere**) malloc(sizeof(Sphere*) * countY);
+        points[i] = (Point**) malloc(sizeof(Point*) * countY);
         for (int j = 0; j < countY; j++) {
-            spheres[i][j] = (Sphere*) malloc(sizeof(Sphere) * countZ);
+            points[i][j] = (Point*) malloc(sizeof(Point) * countZ);
             for (int k = 0; k < countZ; k++) {
-                Sphere* sphere = Sphere::getInstance(
-                        glm::vec3(i * scale, j * scale, k * scale),
-                        glm::vec3(0.05f, 0.05f, 0.05f),
-                        16, 8, shader);
-                spheres[i][j][k] = *sphere;
+                Point p = {
+                    glm::vec3(i, j, k),
+                    1.0f,
+                    visible
+                };
+
+                Sphere* s = Sphere::getInstance(
+                        glm::vec3(p.position.x, p.position.y, p.position.z),
+                        glm::vec3(.05f, .05f, .05f),
+                        8.0f, 4.0f, 
+                        shader
+                );
+
+                spheres.push_back(*s);
+                points[i][j][k] = p;
             }
         }
     }
 
-    return spheres;
+    return points;
 }

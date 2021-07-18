@@ -34,12 +34,12 @@ Mesh::Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *_shad
     shader->disable();
 }
  
-Mesh::~Mesh() {
-    std::cout << "Deleting Mesh" << std::endl;
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-}
+// Mesh::~Mesh() {
+//     std::cout << "Deleting Mesh" << std::endl;
+//     glDeleteVertexArrays(1, &VAO);
+//     glDeleteBuffers(1, &VBO);
+//     glDeleteBuffers(1, &EBO);
+// }
 
 void Mesh::draw() {
     Camera* camera = Camera::MainCamera;

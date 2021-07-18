@@ -32,7 +32,7 @@ private:
 
 public:
     Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *shader);
-    ~Mesh();
+    //~Mesh();
 
     unsigned int VAO, VBO, EBO;
 
