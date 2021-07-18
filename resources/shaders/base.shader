@@ -34,7 +34,7 @@ void main()
     float ambient = 0.25f;
     vec3 normal = normalize(vNorm.xyz);
     vec3 ligthDirection = normalize(-ligthDir.xyz);
-    float diffuse = max(dot(normal, ligthDirection), 0.0f);
+    float diffuse = max(dot(normal, ligthDirection), ambient);
 
-    color = vCol * ligthCol * (diffuse + ambient);
+    color = vCol * ligthCol * diffuse;
 }

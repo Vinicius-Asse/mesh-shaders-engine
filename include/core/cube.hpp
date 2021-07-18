@@ -65,7 +65,7 @@ public:
     Cube(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *shader);
     //~Cube();
 
-    static Cube getInstance(glm::vec3 position, glm::vec3 scale, Shader *shader);
+    static Cube* getInstance(glm::vec3 position, glm::vec3 scale, Shader *shader);
 
     void onUpdate();
 };

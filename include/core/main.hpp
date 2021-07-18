@@ -16,6 +16,7 @@ double TimeDeltaTime;
 
 // Classes de Abstracoes
 #include "../../src/mesh.cpp"
+#include "../../src/program.cpp"
 #include "../../src/shader.cpp"
 #include "../../src/cube.cpp"
 #include "../../src/sphere.cpp"
@@ -37,6 +38,8 @@ void setupWindow(const char*);
 void finishError(std::string);
 void mainLoop();
 double timeControl();
+
+void GLAPIENTRY MessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
 
 
 

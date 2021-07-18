@@ -15,6 +15,10 @@ void Shader::enable() {
     glUseProgram(uId);
 }
 
+void Shader::disable() {
+    glUseProgram(0);
+}
+
 ComposedShader Shader::parseShader(const std::string& filePath) {
     std::ifstream stream(filePath);
 

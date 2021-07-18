@@ -1,6 +1,6 @@
 #include <core/cube.hpp>
 
-Cube Cube::getInstance(glm::vec3 _position, glm::vec3 _scale, Shader *shader) {
+Cube* Cube::getInstance(glm::vec3 _position, glm::vec3 _scale, Shader *shader) {
     std::vector<Vertex> transformedVertices;
 
     for (Vertex v : vertices) {
@@ -18,8 +18,8 @@ Cube Cube::getInstance(glm::vec3 _position, glm::vec3 _scale, Shader *shader) {
         transformedVertices.push_back(newVertice);
     }
 
-    Cube instance(indexes, transformedVertices, shader);
-    instance.translate(_position);
+    Cube* instance = new Cube(indexes, transformedVertices, shader);
+    instance->translate(_position);
 
     return instance;
 }

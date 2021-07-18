@@ -2,7 +2,7 @@
 
 #define MATH_PI 3.14159265359
 
-Sphere Sphere::getInstance(glm::vec3 _position, glm::vec3 _scale, int sectorCount, int stackCount, Shader *shader) {
+Sphere* Sphere::getInstance(glm::vec3 _position, glm::vec3 _scale, int sectorCount, int stackCount, Shader *shader) {
     std::vector<Vertex> vertices = getVertices(0.5f, sectorCount, stackCount);
     std::vector<GLint> indices = getIndices(sectorCount, stackCount);
     std::vector<Vertex> transformedVertices;
@@ -22,8 +22,8 @@ Sphere Sphere::getInstance(glm::vec3 _position, glm::vec3 _scale, int sectorCoun
         transformedVertices.push_back(newVertice);
     }
 
-    Sphere instance(indices, transformedVertices, shader);
-    instance.translate(_position);
+    Sphere* instance = new Sphere(indices, transformedVertices, shader);
+    instance->translate(_position);
 
     return instance;
 }

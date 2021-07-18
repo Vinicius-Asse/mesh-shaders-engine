@@ -17,7 +17,7 @@ public:
     Sphere(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *shader);
     //~Sphere();
 
-    static Sphere getInstance(glm::vec3 position, glm::vec3 scale, int sectorCount, int stackCount, Shader *shader);
+    static Sphere* getInstance(glm::vec3 position, glm::vec3 scale, int sectorCount, int stackCount, Shader *shader);
 
     void onUpdate();
 };

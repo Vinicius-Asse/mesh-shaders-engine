@@ -2,12 +2,13 @@
 
     SDL_Window      *window;
     SDL_GLContext    context;
+    bool             running;
  
 int main(int argc, char** argv) {
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) finishError("Nao foi possivel inicializar o SDL");
 
-    setupWindow("Game Window");
+    setupWindow("Marching Cubes");
     mainLoop();
 
     SDL_GL_DeleteContext(context);
@@ -34,34 +35,22 @@ void setupWindow(const char *title){
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(MessageCallback, 0);
 
     SDL_GL_SetSwapInterval(0);
 }
 
 void mainLoop() {
     SDL_Event e;
-    bool isRunning = true;
+    Program program(window);
 
-    Shader basicShader("resources/shaders/base.shader");
+    program.start();
 
-    Camera camera(
-        glm::vec3(0.0f, 1.0f, 5.0f),
-        45.0f
-    );
-
-    Cube cube = Cube::getInstance(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(1.0f, 1.0f, 1.0f),
-        &basicShader);
-
-    Sphere sphere = Sphere::getInstance(
-        glm::vec3(0.0f, 1.25f, 0.0f),
-        glm::vec3(1.5f, 1.5f, 1.5f),
-        32, 16,
-        &basicShader);
+    running = true;
 
     //GAME LOOP
-    while(isRunning) {
+    while(running) {
 
         // Framerate Control 
         TimeDeltaTime = timeControl();
@@ -70,20 +59,18 @@ void mainLoop() {
         while(SDL_PollEvent(&e) != 0){
             switch(e.type) {
             case SDL_QUIT:
-                isRunning = false;
+                running = false;
                 break;
             default:
                 break;
             }
 
-            camera.handleInputs(e, window);
+            program.input(&e);
         }
 
         // UPDATE
         {
-            camera.update(window);
-            //cube.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
-            //sphere.rotate(glm::vec3(0.5f, 0.5f, 0.0f));
+            program.update();
         }
 
 
@@ -93,8 +80,7 @@ void mainLoop() {
             glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            cube.draw();
-            sphere.draw();
+            program.draw();
 
             //END DRAW: Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);
@@ -105,7 +91,7 @@ void mainLoop() {
 void finishError(std::string err_msg) {
     std::cout << "Ocorreu um problema durante a execucao do programa: " << err_msg << std::endl;
     fflush(stdout);
-    //SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", err_msg.c_str(), NULL);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", err_msg.c_str(), NULL);
     SDL_Quit();
 }
 
@@ -130,4 +116,13 @@ double timeControl(){
 	}
 
     return deltaTime;
+}
+
+void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam )
+{
+    if (type == GL_DEBUG_TYPE_ERROR) {
+        finishError(message);
+    } else {
+        //std::cout << "[WARNING] " << message << std::endl;
+    }
 }

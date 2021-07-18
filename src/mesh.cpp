@@ -29,12 +29,13 @@ Mesh::Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *_shad
     // Setting Normal Attribute
     addAttribute(GL_FLOAT, 3);
 
-
-
     unbind();
+
+    shader->disable();
 }
  
 Mesh::~Mesh() {
+    std::cout << "Deleting Mesh" << std::endl;
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
@@ -62,6 +63,8 @@ void Mesh::draw() {
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_INT, 0);
+
+    shader->disable();
 }
 
 void Mesh::bind() {

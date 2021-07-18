@@ -26,6 +26,7 @@ public:
     ~Shader();
 
     void enable();
+    void disable();
     
     unsigned int uId;
 };
