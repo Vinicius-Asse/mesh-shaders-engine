@@ -19,10 +19,10 @@ glm::mat4 Camera::getViewProjectionMatrix(){
     );
 
     glm::mat4 projection = glm::perspective(
-        glm::radians(80.0f), 
+        glm::radians(fov), 
         (float) (640/480),
         0.3f,
-        fov
+        200.0f
     );
 
     return projection * view;
