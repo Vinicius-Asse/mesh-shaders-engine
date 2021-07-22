@@ -53,6 +53,10 @@ void Mesh::draw() {
     int mvpLoc = glGetUniformLocation(shader->uId, "MVP");
     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 
+    // MODEL MATRIX UNIFORM
+    int modelLoc = glGetUniformLocation(shader->uId, "uModel");
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
     // LIGTH DIRECTION UNIFORM
     int ligthDirLoc = glGetUniformLocation(shader->uId, "ligthDir");
     glUniform4f(ligthDirLoc, ligthDir.x, ligthDir.y, ligthDir.z, 1.0f);
@@ -88,8 +92,8 @@ void Mesh::addAttribute(GLenum type, int count, bool normalized)
     currAttr++;
 }
 
-void Mesh::translate(glm::vec3 _rotation) {
-    model = glm::translate(model, _rotation);
+void Mesh::translate(glm::vec3 _position) {
+    model = glm::translate(model, _position);
 }
 
 void Mesh::rotate(glm::vec3 _rotation) {
