@@ -44,7 +44,12 @@ void setupWindow(const char *title){
 
 void mainLoop() {
     SDL_Event e;
-    Program program(window);
+
+    Program program(
+        window,
+        glm::vec3(10.f, 10.f, 10.f),
+        1.0f
+    );
 
     program.start();
 
@@ -79,7 +84,6 @@ void mainLoop() {
         {
             program.update();
         }
-
 
         // DRAW
         {
