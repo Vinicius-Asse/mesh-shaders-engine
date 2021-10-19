@@ -47,8 +47,7 @@ void mainLoop() {
 
     Program program(
         window,
-        glm::vec3(10.f, 10.f, 10.f),
-        1.0f
+        glm::vec3(10.f, 10.f, 10.f)
     );
 
     program.start();

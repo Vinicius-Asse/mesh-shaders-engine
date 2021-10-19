@@ -3,6 +3,7 @@
 #include<SDL2/SDL.h>
 #include<glm/glm.hpp>
 #include<glm/gtc/noise.hpp>
+#include<unordered_map>
 
 #include<core/camera.hpp>
 #include<core/mesh.hpp>
@@ -13,8 +14,18 @@
 
 struct Point {
     glm::vec3 position;
-    float value;
+    double value;
 };
+
+// struct cmpVec3 {
+//     size_t operator()(const glm::vec3& a) const {
+//         return std::hash<int>()(a.x) ^ std::hash<int>()(a.y);
+//     }
+
+//     bool operator()(const glm::vec3& a, const glm::vec3& b) const {
+//         return glm::all(glm::lessThan(a, b));
+//     }
+// };
 
 struct Triangle {
     glm::vec3 ver0;
@@ -28,8 +39,6 @@ class Program
 private:
     SDL_Window *window;
 
-    double pointDencity;
-
     glm::vec3 worldBounds;
 
     std::vector<Vertex> vertexBuff;
@@ -41,7 +50,7 @@ private:
     void onCreate();
 
 public:
-    Program(SDL_Window*, glm::vec3, double);
+    Program(SDL_Window*, glm::vec3);
 
     void start();
     void input(SDL_Event*);
@@ -50,12 +59,15 @@ public:
 
 private:
     Point*** instantiatePoints(int, int, int);
-    float generateRandomValue(int, int, int, float, glm::vec3);
-    float remap(float, float, float, float, float);
-    Mesh* generateMesh(Shader*);
+    GLfloat generateRandomValue(float, float, float, float, glm::vec3);
+    GLfloat remap(float, float, float, float, float);
+    Mesh* generateMesh(int, int, int, Shader*);
     bool isValidLine(int, int, int);
     bool isValidCube(int, int, int);
     glm::vec3 interpolate(Point, Point);
     Vertex createVertex(glm::vec3, glm::vec3);
     glm::vec3 getNormalVector(glm::vec3, glm::vec3, glm::vec3);
+    void smoothShading(std::vector<Triangle> triangles);
+    void flatShading(std::vector<Triangle> triangles);
+    bool pushUniqueVertices(std::unordered_map<glm::vec3, GLint>*, glm::vec3, glm::vec3, GLint);
 };
