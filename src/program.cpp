@@ -7,8 +7,8 @@
     float noiseScale            = 10.0f;
     float surfaceLevel          = -17.0f;
     float pointDencity          = 1.0f;
-    bool smooth                 = false;
-    bool linearInterp           = false;
+    bool  smooth                = false;
+    bool  linearInterp          = false;
 
 /***
  * Construtor do Programa
@@ -28,8 +28,11 @@ void Program::onCreate() {
     int countY = worldBounds.y * pointDencity;
     int countZ = worldBounds.z * pointDencity;
 
+    std::cout << countX << std::endl;
+
     points = instantiatePoints(countX, countY, countZ);
-    mesh   = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+    mesh   = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+
 }
 
 /***
@@ -230,6 +233,53 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
     }
 
     std::cout << "Terminou de Gerar Mesh. Triangulos: " << triangles.size() << " Vertices: " << vertexBuff.size() << "  Indices: " << indicesBuff.size() << std::endl;
+
+    return new Mesh(indicesBuff, vertexBuff, shader);
+}
+
+Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shader) {
+
+    const int numPoints = countX * countY * countY;
+    
+    GLuint vertexSSbo;
+
+    GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+
+    ComputeShader* compute = new ComputeShader("resources/shaders/points.compute");
+
+    compute->enable();
+
+    glGenBuffers(1, &vertexSSbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numPoints * sizeof(SSBOPoint), NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexSSbo);
+
+    SSBOPoint* ssboPoints = (SSBOPoint*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, numPoints * sizeof(SSBOPoint), bufMask);
+
+    for(int i = 0; i < numPoints; i++) {
+        ssboPoints[i].x = 0;
+        ssboPoints[i].y = 1;
+        ssboPoints[i].z = 0;
+
+        ssboPoints[i].value = 1;
+    }
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    glDispatchCompute(countX, countY, countZ);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
+    SSBOPoint* ppt = (SSBOPoint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+    for(int i = 0; i < numPoints; i++) {
+        SSBOPoint p = ppt[i];
+        std::cout << "I = " << i << " (X: " << p.x << " Y: " << p.y << " Z: " << p.z << " Value: " << p.value << ")" << std::endl;
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    compute->disable();
+
 
     return new Mesh(indicesBuff, vertexBuff, shader);
 }

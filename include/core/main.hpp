@@ -19,6 +19,7 @@ double TimeDeltaTime;
 #include "../../src/mesh.cpp"
 #include "../../src/program.cpp"
 #include "../../src/shader.cpp"
+#include "../../src/computeshader.cpp"
 #include "../../src/cube.cpp"
 #include "../../src/sphere.cpp"
 #include "../../src/camera.cpp"

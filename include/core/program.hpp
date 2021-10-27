@@ -9,12 +9,17 @@
 #include<core/mesh.hpp>
 #include<core/cube.hpp>
 #include<core/sphere.hpp>
+#include<core/computeshader.hpp>
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
 
 struct Point {
     glm::vec3 position;
     double value;
+};
+
+struct SSBOPoint {
+    float x, y, z, value;
 };
 
 // struct cmpVec3 {
@@ -62,6 +67,7 @@ private:
     GLfloat generateRandomValue(float, float, float, float, glm::vec3);
     GLfloat remap(float, float, float, float, float);
     Mesh* generateMesh(int, int, int, Shader*);
+    Mesh* generateMeshGPU(int, int, int, Shader*);
     bool isValidLine(int, int, int);
     bool isValidCube(int, int, int);
     glm::vec3 interpolate(Point, Point);
