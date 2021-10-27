@@ -39,8 +39,6 @@ std::string ComputeShader::parseShader(const std::string& filePath) {
         }
     }
 
-    std::cout << ss.str() << std::endl;
-
     return ss.str();
 }
 
