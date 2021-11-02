@@ -23,6 +23,7 @@ double TimeDeltaTime;
 #include "../../src/cube.cpp"
 #include "../../src/sphere.cpp"
 #include "../../src/camera.cpp"
+#include "../../src/parameters.cpp"
 
 // Bibliotecas Auxiliares
 #include <iostream>

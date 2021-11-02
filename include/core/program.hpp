@@ -11,6 +11,7 @@
 #include<core/cube.hpp>
 #include<core/sphere.hpp>
 #include<core/computeshader.hpp>
+#include<core/parameters.hpp>
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
 
@@ -19,16 +20,6 @@
 struct Point {
     float x, y, z, value;
 };
-
-// struct cmpVec3 {
-//     size_t operator()(const glm::vec3& a) const {
-//         return std::hash<int>()(a.x) ^ std::hash<int>()(a.y);
-//     }
-
-//     bool operator()(const glm::vec3& a, const glm::vec3& b) const {
-//         return glm::all(glm::lessThan(a, b));
-//     }
-// };
 
 struct vec4
 {
@@ -51,18 +42,18 @@ class Program
 private:
     SDL_Window *window;
 
-    glm::vec3 worldBounds;
-
     std::vector<Vertex> vertexBuff;
     std::vector<GLint> indicesBuff;
 
     Point*** points;
     Mesh* mesh;
 
+    Parameters *param;
+
     void onCreate();
 
 public:
-    Program(SDL_Window*, glm::vec3);
+    Program(Parameters*);
 
     void start();
     void input(SDL_Event*);

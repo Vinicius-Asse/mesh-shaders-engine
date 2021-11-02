@@ -3,11 +3,11 @@
 Shader::Shader(const std::string& shaderPath) {
     composedShader = parseShader(shaderPath);
     uId = createShader(composedShader);
-    std::cout << "[" << std::to_string(uId) << "] * Shader Program Created * " << std::endl;
+    //std::cout << "[" << std::to_string(uId) << "] * Shader Program Created * " << std::endl;
 }
 
 Shader::~Shader() {
-    std::cout << "[" << std::to_string(uId) << "] ~ Deleting Shader Data" << std::endl;
+    //std::cout << "[" << std::to_string(uId) << "] ~ Deleting Shader Data" << std::endl;
     glDeleteProgram(uId);
 }
 

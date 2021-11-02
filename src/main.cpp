@@ -45,10 +45,14 @@ void setupWindow(const char *title){
 void mainLoop() {
     SDL_Event e;
 
-    Program program(
-        window,
-        glm::vec3(10.f, 10.f, 10.f)
+    Parameters *param = new Parameters();
+
+    Camera camera = Camera(
+        glm::vec3(0.0f, 0.0f, 20.5f),
+        60.0f, window
     );
+
+    Program program(param);
 
     program.start();
 
@@ -60,27 +64,50 @@ void mainLoop() {
         // Framerate Control 
         TimeDeltaTime = timeControl();
 
+        bool changedMesh = false;
+
         // INPUT HANDLER
         while(SDL_PollEvent(&e) != 0){
             switch(e.type) {
-            case SDL_QUIT:
-                running = false;
-                break;
-            case SDL_WINDOWEVENT:
-                if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    int width, height;
-                    SDL_GetWindowSize(window, &width, &height);
-                    glViewport(0, 0, width, height);
-                }
-            default:
-                break;
+                case SDL_QUIT:
+                    running = false;
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        int width, height;
+                        SDL_GetWindowSize(window, &width, &height);
+                        glViewport(0, 0, width, height);
+                    }
+                    break;
+                case SDL_KEYDOWN:
+                    switch(e.key.keysym.sym) {
+                        case SDLK_LEFT:  param->noiseDisplacement.x += 0.5f;         changedMesh = true; break;
+                        case SDLK_RIGHT: param->noiseDisplacement.x -= 0.5f;         changedMesh = true; break;
+                        case SDLK_UP:    param->noiseDisplacement.z += 0.5f;         changedMesh = true; break;
+                        case SDLK_DOWN:  param->noiseDisplacement.z -= 0.5f;         changedMesh = true; break;
+                        case SDLK_i:     param->noiseScale += 0.5f;                  changedMesh = true; break;
+                        case SDLK_o:     param->noiseScale -= 0.5f;                  changedMesh = true; break;
+                        case SDLK_q:     param->surfaceLevel -= 0.1f;                changedMesh = true; break;
+                        case SDLK_e:     param->surfaceLevel += 0.1f;                changedMesh = true; break;
+                        case SDLK_t:     param->pointDencity += 0.5f;                changedMesh = true; break;
+                        case SDLK_y:     param->pointDencity -= 0.5f;                changedMesh = true; break;
+                        case SDLK_k:     param->smooth       = !param->smooth;       changedMesh = true; break;
+                        case SDLK_j:     param->linearInterp = !param->linearInterp; changedMesh = true; break;
+                        case SDLK_g:     param->useGPU       = !param->useGPU;       changedMesh = true; break;
+                    }
+                    break;
+                default:
+                    break;
             }
 
-            program.input(&e);
+            camera.handleInputs(e);
         }
+
+        if (changedMesh) program.start();
 
         // UPDATE
         {
+            camera.update();
             program.update();
         }
 

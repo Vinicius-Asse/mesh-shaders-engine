@@ -2,23 +2,13 @@
 
 unsigned __int64 currentTimeInMillis();
 
-    Camera*             camera;
-    Cube*               cube;
-
-    float distX, distY, distZ   = 0.0f;
-    float noiseScale            = 10.0f;
-    float surfaceLevel          = 0.0f;
-    float pointDencity          = 1.0f;
-    bool  smooth                = false;
-    bool  linearInterp          = false;
-    bool  useGPU                = true;
+    Cube*               wiredCube;
 
 /***
  * Construtor do Programa
 **/
-Program::Program(SDL_Window* _window, glm::vec3 _worldBounds) {
-    window = _window;
-    worldBounds = _worldBounds;
+Program::Program(Parameters *_param) {
+    param = _param;
 
     onCreate();
 }
@@ -27,16 +17,29 @@ Program::Program(SDL_Window* _window, glm::vec3 _worldBounds) {
  * Método Executado Quando o Programa é Criado
 **/
 void Program::onCreate() {
-    int countX = worldBounds.x * pointDencity;
-    int countY = worldBounds.y * pointDencity;
-    int countZ = worldBounds.z * pointDencity;
+    Shader* baseShader = new Shader("resources/shaders/base.glsl");
 
-    LOG("countX: " << countX << " countY: " << countY << " countZ: " << countZ);
+    wiredCube = Cube::getInstance(
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(10.0f, 10.0f, 10.0f),
+        baseShader
+    );
+
+    start();
+}
+
+/***
+ * Método Executado Quando o Programa é Iniciado
+**/
+void Program::start() {
+    int countX = param->worldBounds.x * param->pointDencity;
+    int countY = param->worldBounds.y * param->pointDencity;
+    int countZ = param->worldBounds.z * param->pointDencity;
 
     unsigned __int64 startTime = currentTimeInMillis();
     points = instantiatePointsGPU(countX, countY, countZ);
     
-    if (useGPU) {
+    if (param->useGPU) {
         mesh = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
     } else {
         mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
@@ -45,78 +48,26 @@ void Program::onCreate() {
     std::cout << "Tempo para gerar mesh: " << currentTimeInMillis() - startTime << "ms. ";
     std::cout << 
         "{ " << 
-                "surfaceLevel: '" << std::to_string(surfaceLevel) << "', " <<
-                "smooth: '"       << std::to_string(smooth)       << "', " <<
-                "linearInterp: '" << std::to_string(linearInterp) << "', " <<
-                "distX:  '"       << std::to_string(distX)        << "', " <<
-                "distY: '"        << std::to_string(distY)        << "', " <<
-                "distZ: '"        << std::to_string(distZ)        << "', " <<
-                "GPU: '"          << std::to_string(useGPU)                <<
+                "surfaceLevel: '" << std::to_string(param->surfaceLevel)           << "', " <<
+                "smooth: '"       << std::to_string(param->smooth)                 << "', " <<
+                "linearInterp: '" << std::to_string(param->linearInterp)           << "', " <<
+                // "distX:  '"       << std::to_string(param->noiseDisplacement.x)    << "', " <<
+                // "distY: '"        << std::to_string(param->noiseDisplacement.y)    << "', " <<
+                // "distZ: '"        << std::to_string(param->noiseDisplacement.z)    << "', " <<
+                "GPU: '"          << std::to_string(param->useGPU)                 <<
         " }" << 
         std::endl;
 }
 
 /***
- * Método Executado Quando o Programa é Iniciado
-**/
-void Program::start() {
-    Shader* baseShader = new Shader("resources/shaders/base.glsl");
-
-    camera = new Camera(
-        glm::vec3(0.0f, 0.0f, 20.5f),
-        60.0f, window
-    );
-
-    cube = Cube::getInstance(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(10.0f, 10.0f, 10.0f),
-        baseShader
-    );
-}
-
-/***
  * Método Executado no Inicio de Cada Frame
 **/
-void Program::input(SDL_Event* e) {
-    camera->handleInputs(*e);
-
-    bool changedMesh   = false;
-    bool changedPoints = false;
-    switch (e->type) {
-    case SDL_KEYDOWN:
-        switch(e->key.keysym.sym) {
-            case SDLK_q:     surfaceLevel -= 0.1f;         changedMesh = true; break;
-            case SDLK_e:     surfaceLevel += 0.1f;         changedMesh = true; break;
-            case SDLK_k:     smooth = !smooth;             changedMesh = true; break;
-            case SDLK_j:     linearInterp = !linearInterp; changedMesh = true; break;
-            case SDLK_g:     useGPU = !useGPU;             changedMesh = true; break;
-            case SDLK_LEFT:  distX += 0.5f;                changedMesh = true;   changedPoints = true; break;
-            case SDLK_RIGHT: distX -= 0.5f;                changedMesh = true;   changedPoints = true; break;
-            case SDLK_UP:    distZ += 0.5f;                changedMesh = true;   changedPoints = true; break;
-            case SDLK_DOWN:  distZ -= 0.5f;                changedMesh = true;   changedPoints = true; break;
-            case SDLK_i:     noiseScale += 0.5f;           changedMesh = true;   changedPoints = true; break;
-            case SDLK_o:     noiseScale -= 0.5f;           changedMesh = true;   changedPoints = true; break;
-            case SDLK_t:     pointDencity += 0.5f;         changedMesh = true;   changedPoints = true; break;
-            case SDLK_y:     pointDencity -= 0.5f;         changedMesh = true;   changedPoints = true; break;
-        }
-        break;
-    default:
-        break;
-    }
-
-    if (changedMesh) {
-        onCreate();
-    }
-}
+void Program::input(SDL_Event* e) { }
 
 /***
  * Método Executado Toda Frame
 **/
-void Program::update() {
-    camera->update();
-    //cube->rotate(glm::vec3(1.0f, 1.0f, 0.0f));
-    //sphere->rotate(glm::vec3(1.0f, 1.0f, 0.0f));
-}
+void Program::update() { }
 
 /***
  * Método Executado ao Fim de Toda Frame
@@ -129,7 +80,7 @@ void Program::draw() {
     glDisable(GL_CULL_FACE);
 
     // Draw the box
-    cube->draw();
+    wiredCube->draw();
 
     // Turn off wireframe mode
     glPolygonMode(GL_FRONT, GL_FILL);
@@ -159,7 +110,7 @@ Point*** Program::instantiatePoints(int countX, int countY, int countZ) {
                 float z = remap(k, 0, countZ - 1, -5.0f, 5.0f);
                 points[i][j][k] = {
                     x, y, z,
-                    generateRandomValue(x, y, z, noiseScale, glm::vec3(distX, distY, distZ))
+                    generateRandomValue(x, y, z, param->noiseScale, param->noiseDisplacement)
                 };
             }
         }
@@ -241,7 +192,7 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
                 int cubeIndex = 0;
                 for (int l = 0; l < 8; l++)
                 {
-                    if (corners[l].value > surfaceLevel)
+                    if (corners[l].value > param->surfaceLevel)
                     {
                         cubeIndex |= 1 << l;
                     }
@@ -277,7 +228,7 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
         }
     }
 
-    if (smooth) {
+    if (param->smooth) {
         smoothShading(triangles);
     } else {
         flatShading(triangles);
@@ -289,6 +240,8 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
 }
 
 Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shader) {
+
+    std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
 
     std::vector<Triangle> triangles;
 
@@ -395,7 +348,7 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
 
     compute->disable();
 
-    if (smooth) {
+    if (param->smooth) {
         smoothShading(triangles);
     } else {
         flatShading(triangles);
@@ -431,8 +384,8 @@ glm::vec3 Program::interpolate(Point a, Point b) {
     glm::vec3 aPos = glm::vec3(a.x, a.y, a.z);
     glm::vec3 bPos = glm::vec3(b.x, b.y, b.z);
 
-    if (linearInterp) {
-        float t = (surfaceLevel - a.value) / (b.value - a.value);
+    if (param->linearInterp) {
+        float t = (param->surfaceLevel - a.value) / (b.value - a.value);
         return aPos + t * (bPos - aPos);
     } else {
         return (aPos + bPos) / 2.0f;
@@ -445,9 +398,9 @@ GLfloat Program::remap(float value, float fromLow, float fromHigh, float toLow, 
 
 bool Program::isValidLine(int i, int j, int k)
 {
-    if (i < 0 || i >= worldBounds.x * pointDencity) return false;
-    if (j < 0 || j >= worldBounds.y * pointDencity) return false;
-    if (k < 0 || k >= worldBounds.z * pointDencity) return false;
+    if (i < 0 || i >= param->worldBounds.x * param->pointDencity) return false;
+    if (j < 0 || j >= param->worldBounds.y * param->pointDencity) return false;
+    if (k < 0 || k >= param->worldBounds.z * param->pointDencity) return false;
 
     return true;
 }
