@@ -10,7 +10,7 @@ float Utils::remap(float value, float fromLow, float fromHigh, float toLow, floa
     return toLow + (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow);
 }
 
-Vertex Utils::createVertex(glm::vec3 position, glm::vec3 normal) {
+Vertex Utils::createVertex(Vec4 position, Vec4 normal) {
     return 
     {
         { position.x, position.y, position.z},

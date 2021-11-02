@@ -214,10 +214,13 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
                     glm::vec3 vec0 = interpolate(corners[a0], corners[b0]);
                     glm::vec3 vec1 = interpolate(corners[a1], corners[b1]);
                     glm::vec3 vec2 = interpolate(corners[a2], corners[b2]);
+                    glm::vec3 normal = Utils::getNormalVector(vec0, vec1, vec2);
 
                     triangles.push_back({
-                        vec0, vec1, vec2,
-                        Utils::getNormalVector(vec0, vec1, vec2)
+                        {vec0.x, vec0.y, vec0.z, 1.0f}, 
+                        {vec1.x, vec1.y, vec1.z, 1.0f},
+                        {vec2.x, vec2.y, vec2.z, 1.0f},
+                        {normal.x, normal.y, normal.z, 1.0f},
                     });
                 }
             }
@@ -264,11 +267,11 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
     {
         glGenBuffers(1, &trianglesSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleSSBO) * maxTrizQnt, NULL, GL_STATIC_DRAW);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * maxTrizQnt, NULL, GL_STATIC_DRAW);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, trianglesSSBO);
 
         GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-        TriangleSSBO* trianglesBuff = (TriangleSSBO*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleSSBO) * maxTrizQnt, bufMask);
+        Triangle* trianglesBuff = (Triangle*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Triangle) * maxTrizQnt, bufMask);
 
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
@@ -311,21 +314,23 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
     }
 
     // Retrieving Triangles Buffer Data
-    TriangleSSBO* trianglesPtr = nullptr;
+    Triangle* trianglesPtr = nullptr;
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
-        trianglesPtr = (TriangleSSBO*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        trianglesPtr = (Triangle*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
         for (int i = 0; i < trizCount; i++) {
-            TriangleSSBO t = trianglesPtr[i];
+            Triangle t = trianglesPtr[i];
             //LOG("X0 = " << t.ver0.x << " Y0 = " << t.ver0.y << " Z0 = " << t.ver0.z << " X1 = " << t.ver1.x << " Y1 = " << t.ver1.y << " Z1 = " << t.ver1.z << " X2 = " << t.ver2.x << " Y2 = " << t.ver2.y << " Z2 = " << t.ver2.z);
-            triangles.push_back({ 
-                glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z), 
-                glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z), 
-                glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z), 
-                glm::vec3(t.normal.x, t.normal.y, t.normal.z) 
-            });
+            // triangles.push_back({ 
+            //     glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z), 
+            //     glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z), 
+            //     glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z), 
+            //     glm::vec3(t.normal.x, t.normal.y, t.normal.z) 
+            // });
             
             //triangles.push_back({ t.ver0, t.ver1, t.ver1, t.normal });
+
+            triangles.push_back(t);
         }
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
@@ -377,9 +382,14 @@ void Program::smoothShading(std::vector<Triangle> triangles) {
     for (int i = 0; i < triangles.size(); i++) {
         Triangle t = triangles[i];
 
-        if (pushUniqueVertices(&map, t.ver0, t.normal, curr)) curr++;
-        if (pushUniqueVertices(&map, t.ver1, t.normal, curr)) curr++;
-        if (pushUniqueVertices(&map, t.ver2, t.normal, curr)) curr++;
+        glm::vec3 v0 = glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z);
+        glm::vec3 v1 = glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z);
+        glm::vec3 v2 = glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z);
+        glm::vec3 normal = glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z);
+
+        if (pushUniqueVertices(&map, v0, normal, curr)) curr++;
+        if (pushUniqueVertices(&map, v1, normal, curr)) curr++;
+        if (pushUniqueVertices(&map, v2, normal, curr)) curr++;
     }
 }
 
@@ -403,7 +413,7 @@ void Program::flatShading(std::vector<Triangle> triangles) {
 bool Program::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
     if (map->find(position) == map->end()) {
         map->insert(std::make_pair(position, current));
-        vertexBuff.push_back(Utils::createVertex(position, normal));
+        vertexBuff.push_back(Utils::createVertex({position.x, position.y, position.z, 1.0f}, {normal.x, normal.y, normal.z, 1.0f}));
         indicesBuff.push_back(current);
 
         return true;

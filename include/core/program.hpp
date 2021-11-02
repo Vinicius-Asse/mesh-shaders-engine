@@ -20,20 +20,14 @@ struct Point {
     float x, y, z, value;
 };
 
-struct vec4
+struct Vec4
 {
     float x, y, z, w;
 };
 
-struct TriangleSSBO {
-    vec4 ver0, ver1, ver2, normal;
-};
-
 struct Triangle {
-    glm::vec3 ver0;
-    glm::vec3 ver1;
-    glm::vec3 ver2;
-    glm::vec3 normal;
+    Vec4 ver0, ver1, ver2;
+    Vec4 normal;
 };
 
 class Program
