@@ -4,6 +4,7 @@
 #include<glm/glm.hpp>
 #include<glm/gtc/noise.hpp>
 #include<unordered_map>
+#include<chrono>
 
 #include<core/camera.hpp>
 #include<core/mesh.hpp>
@@ -13,12 +14,9 @@
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
 
-struct Point {
-    glm::vec3 position;
-    double value;
-};
+#define LOG(msg) std::cout << msg << std::endl
 
-struct SSBOPoint {
+struct Point {
     float x, y, z, value;
 };
 
@@ -31,6 +29,15 @@ struct SSBOPoint {
 //         return glm::all(glm::lessThan(a, b));
 //     }
 // };
+
+struct vec4
+{
+    float x, y, z, w;
+};
+
+struct TriangleSSBO {
+    vec4 ver0, ver1, ver2, normal;
+};
 
 struct Triangle {
     glm::vec3 ver0;
@@ -64,6 +71,7 @@ public:
 
 private:
     Point*** instantiatePoints(int, int, int);
+    Point*** instantiatePointsGPU(int, int, int);
     GLfloat generateRandomValue(float, float, float, float, glm::vec3);
     GLfloat remap(float, float, float, float, float);
     Mesh* generateMesh(int, int, int, Shader*);

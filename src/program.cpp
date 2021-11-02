@@ -1,14 +1,17 @@
 #include<core/program.hpp>
 
+unsigned __int64 currentTimeInMillis();
+
     Camera*             camera;
     Cube*               cube;
 
     float distX, distY, distZ   = 0.0f;
     float noiseScale            = 10.0f;
-    float surfaceLevel          = -17.0f;
+    float surfaceLevel          = 0.0f;
     float pointDencity          = 1.0f;
     bool  smooth                = false;
     bool  linearInterp          = false;
+    bool  useGPU                = true;
 
 /***
  * Construtor do Programa
@@ -28,10 +31,16 @@ void Program::onCreate() {
     int countY = worldBounds.y * pointDencity;
     int countZ = worldBounds.z * pointDencity;
 
-    std::cout << countX << std::endl;
+    LOG("countX: " << countX << " countY: " << countY << " countZ: " << countZ);
 
-    points = instantiatePoints(countX, countY, countZ);
+    unsigned __int64 startTime = currentTimeInMillis();
+    points = instantiatePointsGPU(countX, countY, countZ);
+    std::cout << "Tempo para gerar pontos: " << currentTimeInMillis() - startTime << "ms" << std::endl;
+
+    startTime = currentTimeInMillis();
     mesh   = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+    std::cout << "Tempo para gerar mesh: " << currentTimeInMillis() - startTime << "ms" << std::endl;
+
 
 }
 
@@ -64,18 +73,19 @@ void Program::input(SDL_Event* e) {
     switch (e->type) {
     case SDL_KEYDOWN:
         switch(e->key.keysym.sym) {
-            case SDLK_q:     surfaceLevel -= 0.5f;         changedMesh = true; break;
-            case SDLK_e:     surfaceLevel += 0.5f;         changedMesh = true; break;
+            case SDLK_q:     surfaceLevel -= 0.1f;         changedMesh = true; break;
+            case SDLK_e:     surfaceLevel += 0.1f;         changedMesh = true; break;
             case SDLK_k:     smooth = !smooth;             changedMesh = true; break;
             case SDLK_j:     linearInterp = !linearInterp; changedMesh = true; break;
+            case SDLK_g:     useGPU = !useGPU;             changedMesh = true; break;
             case SDLK_LEFT:  distX += 0.5f;                changedMesh = true;   changedPoints = true; break;
             case SDLK_RIGHT: distX -= 0.5f;                changedMesh = true;   changedPoints = true; break;
             case SDLK_UP:    distZ += 0.5f;                changedMesh = true;   changedPoints = true; break;
             case SDLK_DOWN:  distZ -= 0.5f;                changedMesh = true;   changedPoints = true; break;
             case SDLK_i:     noiseScale += 0.5f;           changedMesh = true;   changedPoints = true; break;
             case SDLK_o:     noiseScale -= 0.5f;           changedMesh = true;   changedPoints = true; break;
-            case SDLK_t:     pointDencity += 1.0f;         changedMesh = true;   changedPoints = true; break;
-            case SDLK_y:     pointDencity -= 1.0f;         changedMesh = true;   changedPoints = true; break;
+            case SDLK_t:     pointDencity += 0.5f;         changedMesh = true;   changedPoints = true; break;
+            case SDLK_y:     pointDencity -= 0.5f;         changedMesh = true;   changedPoints = true; break;
         }
         break;
     default:
@@ -88,10 +98,17 @@ void Program::input(SDL_Event* e) {
         int countZ = worldBounds.z * pointDencity;
 
         if (changedPoints) {
-            points = instantiatePoints(countX, countY, countZ);
+            unsigned __int64 startTime = currentTimeInMillis();
+            points = instantiatePointsGPU(countX, countY, countZ);
+            std::cout << "Tempo para gerar pontos: " << currentTimeInMillis() - startTime << "ms" << std::endl;
         }
 
-        mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+        unsigned __int64 startTime = currentTimeInMillis();
+        if (useGPU)
+            mesh = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+        else
+            mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+        std::cout << "Tempo para gerar mesh: " << currentTimeInMillis() - startTime << "ms" << std::endl;
 
         std::cout << 
         "{ " << 
@@ -155,12 +172,60 @@ Point*** Program::instantiatePoints(int countX, int countY, int countZ) {
                 float y = remap(j, 0, countY - 1, -5.0f, 5.0f);
                 float z = remap(k, 0, countZ - 1, -5.0f, 5.0f);
                 points[i][j][k] = {
-                    glm::vec3(x, y, z),
+                    x, y, z,
                     generateRandomValue(x, y, z, noiseScale, glm::vec3(distX, distY, distZ))
                 };
             }
         }
     }
+
+    return points;
+}
+
+Point*** Program::instantiatePointsGPU(int countX, int countY, int countZ) {
+
+    const int buffSize = countX * countY * countZ * sizeof(Point);
+    
+    GLuint vertexSSbo;
+
+    GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+
+    ComputeShader* compute = new ComputeShader("resources/shaders/points.compute");
+
+    compute->enable();
+
+    glGenBuffers(1, &vertexSSbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, buffSize, NULL, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexSSbo);
+
+    Point* ssboPoints = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, buffSize, bufMask);
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    glDispatchCompute(countX, countY, countZ);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
+    Point* ppt = (Point*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+
+    Point*** points = (Point***) malloc(sizeof(Point**) * countX); //TODO: Refatorar codigo para utilizar apenas array de pontos
+    for (int i = 0; i < countX; i++) {
+        points[i] = (Point**) malloc(sizeof(Point*) * countY);
+        for (int j = 0; j < countY; j++) {
+            points[i][j] = (Point*) malloc(sizeof(Point) * countZ);
+            for (int k = 0; k < countZ; k++) {
+                int currPos = k + (countY * j) + (countZ * countY * i);
+                Point p = ppt[currPos];
+                points[i][j][k] = p;
+            }
+        }
+    }
+
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    compute->disable();
 
     return points;
 }
@@ -177,14 +242,14 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
                 if (!isValidCube(i, j, k)) continue;
 
                 Point corners[8] = {
-                    points[i  ][j  ][k  ],
-                    points[i+1][j  ][k  ],
-                    points[i+1][j  ][k+1],
-                    points[i  ][j  ][k+1],
-                    points[i  ][j+1][k  ],
-                    points[i+1][j+1][k  ],
-                    points[i+1][j+1][k+1],
-                    points[i  ][j+1][k+1] 
+                    points[i  ][j  ][k  ],  //points[i   + (countY * j  ) + (countZ * countY * k  )],
+                    points[i+1][j  ][k  ],  //points[i+1 + (countY * j  ) + (countZ * countY * k  )],
+                    points[i+1][j  ][k+1],  //points[i+1 + (countY * j  ) + (countZ * countY * k+1)],
+                    points[i  ][j  ][k+1],  //points[i   + (countY * j  ) + (countZ * countY * k+1)],
+                    points[i  ][j+1][k  ],  //points[i   + (countY * j  ) + (countZ * countY * k  )],
+                    points[i+1][j+1][k  ],  //points[i+1 + (countY * j+1) + (countZ * countY * k  )],
+                    points[i+1][j+1][k+1],  //points[i+1 + (countY * j+1) + (countZ * countY * k+1)],
+                    points[i  ][j+1][k+1]   //points[i   + (countY * j+1) + (countZ * countY * k+1)] 
                 };
 
                 int cubeIndex = 0;
@@ -239,47 +304,128 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
 
 Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shader) {
 
-    const int numPoints = countX * countY * countY;
-    
-    GLuint vertexSSbo;
+    std::vector<Triangle> triangles;
 
-    GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+    const int maxTrizQnt = 2991;
+    const int totalPoints = countX * countY * countZ;
 
-    ComputeShader* compute = new ComputeShader("resources/shaders/points.compute");
+    LOG("Quantidade maxima de triangulos: " << maxTrizQnt);
+
+    ComputeShader* compute = new ComputeShader("resources/shaders/marching.compute");
 
     compute->enable();
 
-    glGenBuffers(1, &vertexSSbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, numPoints * sizeof(SSBOPoint), NULL, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexSSbo);
-
-    SSBOPoint* ssboPoints = (SSBOPoint*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, numPoints * sizeof(SSBOPoint), bufMask);
-
-    for(int i = 0; i < numPoints; i++) {
-        ssboPoints[i].x = 0;
-        ssboPoints[i].y = 1;
-        ssboPoints[i].z = 0;
-
-        ssboPoints[i].value = 1;
+    // Setting up Atomic Counter Buffer
+    GLuint countBuff = 0;
+    {
+        GLuint zero = 0;
+        glGenBuffers(1, &countBuff);
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
+        glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, countBuff);
+        glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_COPY);
+        glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &zero);
     }
 
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    LOG("Gerou Atomic Counter");
 
+    // Setting up Triangles SSBO
+    GLuint trianglesSSBO;
+    {
+        glGenBuffers(1, &trianglesSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TriangleSSBO) * maxTrizQnt, NULL, GL_STATIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, trianglesSSBO);
+
+        GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+        TriangleSSBO* trianglesBuff = (TriangleSSBO*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TriangleSSBO) * maxTrizQnt, bufMask);
+
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    }
+
+    LOG("Gerou Triangle SSBO");
+
+    // Setting up Points SSBO
+    GLuint pointsSSBO;
+    {
+        glGenBuffers(1, &pointsSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Point) * totalPoints, NULL, GL_STATIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, pointsSSBO);
+
+        GLint  bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+        Point* pointsBuff = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Point) * totalPoints, bufMask);
+
+        int curr = 0;
+        for(int i = 0; i < countX; i++) {
+            for(int j = 0; j < countY; j++) {
+                for(int k = 0; k < countZ; k++) {
+                    pointsBuff[curr++] = points[i][j][k];
+                    //LOG(pointsBuff[i].x << " " << pointsBuff[i].y << " " << pointsBuff[i].z << " " );
+                }
+            }
+        }
+
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    }
+
+    LOG("Gerou Points SSBO");
+
+    // Dispatch Compute Shader
     glDispatchCompute(countX, countY, countZ);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
-    SSBOPoint* ppt = (SSBOPoint*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    for(int i = 0; i < numPoints; i++) {
-        SSBOPoint p = ppt[i];
-        std::cout << "I = " << i << " (X: " << p.x << " Y: " << p.y << " Z: " << p.z << " Value: " << p.value << ")" << std::endl;
+    // Retrieving Triangles Count
+    GLuint trizCount;
+    {
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
+        GLuint* trizCountPtr = (GLuint*) glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_ONLY);
+        trizCount = trizCountPtr[0];
+        glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    LOG("Triangles Generated: " << trizCount);
+
+    // Retrieving Triangles Buffer Data
+    TriangleSSBO* trianglesPtr = nullptr;
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
+        trianglesPtr = (TriangleSSBO*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        for (int i = 0; i < trizCount; i++) {
+            TriangleSSBO t = trianglesPtr[i];
+            //LOG("X0 = " << t.ver0.x << " Y0 = " << t.ver0.y << " Z0 = " << t.ver0.z << " X1 = " << t.ver1.x << " Y1 = " << t.ver1.y << " Z1 = " << t.ver1.z << " X2 = " << t.ver2.x << " Y2 = " << t.ver2.y << " Z2 = " << t.ver2.z);
+            triangles.push_back({ 
+                glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z), 
+                glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z), 
+                glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z), 
+                glm::vec3(t.normal.x, t.normal.y, t.normal.z) 
+            });
+            
+            //triangles.push_back({ t.ver0, t.ver1, t.ver1, t.normal });
+        }
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    }
+
+    // Retrieving Points Buffer Data
+    Point* pointsPtr = nullptr;
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
+        pointsPtr = (Point*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        for (int i = 0; i < trizCount; i++) {
+            Point p = pointsPtr[i];
+            //LOG("X0 = " << p.x << " Y0 = " << p.y << " Z0 = " << p.z << " Value = " << p.value);
+        }
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    }
 
     compute->disable();
 
+    if (smooth) {
+        smoothShading(triangles);
+    } else {
+        flatShading(triangles);
+    }
+
+    std::cout << "Terminou de Gerar Mesh. Triangulos: " << triangles.size() << " Vertices: " << vertexBuff.size() << "  Indices: " << indicesBuff.size() << std::endl;
 
     return new Mesh(indicesBuff, vertexBuff, shader);
 }
@@ -302,15 +448,18 @@ GLfloat Program::generateRandomValue(float _x, float _y, float _z, float scale, 
 
         //std::cout << result << std::endl;
 
-        return remap(result, 0, 1.0f, -16, 32);
+        return remap(result, 0, 1.0f, 1, -1);
 }
 
 glm::vec3 Program::interpolate(Point a, Point b) {
+    glm::vec3 aPos = glm::vec3(a.x, a.y, a.z);
+    glm::vec3 bPos = glm::vec3(b.x, b.y, b.z);
+
     if (linearInterp) {
         float t = (surfaceLevel - a.value) / (b.value - a.value);
-        return a.position + t * (b.position - a.position);
+        return aPos + t * (bPos - aPos);
     } else {
-        return (a.position + b.position) / 2.0f;
+        return (aPos + bPos) / 2.0f;
     }
 }
 
@@ -391,4 +540,10 @@ bool Program::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm:
         indicesBuff.push_back(map->at(position));
         return false;
     }
+}
+
+unsigned __int64 currentTimeInMillis() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+        .time_since_epoch())
+        .count();
 }
