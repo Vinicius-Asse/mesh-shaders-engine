@@ -35,13 +35,25 @@ void Program::onCreate() {
 
     unsigned __int64 startTime = currentTimeInMillis();
     points = instantiatePointsGPU(countX, countY, countZ);
-    std::cout << "Tempo para gerar pontos: " << currentTimeInMillis() - startTime << "ms" << std::endl;
+    
+    if (useGPU) {
+        mesh = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+    } else {
+        mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+    }
 
-    startTime = currentTimeInMillis();
-    mesh   = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
-    std::cout << "Tempo para gerar mesh: " << currentTimeInMillis() - startTime << "ms" << std::endl;
-
-
+    std::cout << "Tempo para gerar mesh: " << currentTimeInMillis() - startTime << "ms. ";
+    std::cout << 
+        "{ " << 
+                "surfaceLevel: '" << std::to_string(surfaceLevel) << "', " <<
+                "smooth: '"       << std::to_string(smooth)       << "', " <<
+                "linearInterp: '" << std::to_string(linearInterp) << "', " <<
+                "distX:  '"       << std::to_string(distX)        << "', " <<
+                "distY: '"        << std::to_string(distY)        << "', " <<
+                "distZ: '"        << std::to_string(distZ)        << "', " <<
+                "GPU: '"          << std::to_string(useGPU)                <<
+        " }" << 
+        std::endl;
 }
 
 /***
@@ -93,33 +105,7 @@ void Program::input(SDL_Event* e) {
     }
 
     if (changedMesh) {
-        int countX = worldBounds.x * pointDencity;
-        int countY = worldBounds.y * pointDencity;
-        int countZ = worldBounds.z * pointDencity;
-
-        if (changedPoints) {
-            unsigned __int64 startTime = currentTimeInMillis();
-            points = instantiatePointsGPU(countX, countY, countZ);
-            std::cout << "Tempo para gerar pontos: " << currentTimeInMillis() - startTime << "ms" << std::endl;
-        }
-
-        unsigned __int64 startTime = currentTimeInMillis();
-        if (useGPU)
-            mesh = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
-        else
-            mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
-        std::cout << "Tempo para gerar mesh: " << currentTimeInMillis() - startTime << "ms" << std::endl;
-
-        std::cout << 
-        "{ " << 
-                "surfaceLevel: '" << std::to_string(surfaceLevel) << "', " <<
-                "smooth: '"       << std::to_string(smooth)       << "', " <<
-                "linearInterp: '" << std::to_string(linearInterp) << "', " <<
-                "distX:  '"       << std::to_string(distX)        << "', " <<
-                "distY: '"        << std::to_string(distY)        << "', " <<
-                "distZ: '"        << std::to_string(distZ)                 <<
-        " }" << 
-        std::endl;
+        onCreate();
     }
 }
 
@@ -242,14 +228,14 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
                 if (!isValidCube(i, j, k)) continue;
 
                 Point corners[8] = {
-                    points[i  ][j  ][k  ],  //points[i   + (countY * j  ) + (countZ * countY * k  )],
-                    points[i+1][j  ][k  ],  //points[i+1 + (countY * j  ) + (countZ * countY * k  )],
-                    points[i+1][j  ][k+1],  //points[i+1 + (countY * j  ) + (countZ * countY * k+1)],
-                    points[i  ][j  ][k+1],  //points[i   + (countY * j  ) + (countZ * countY * k+1)],
-                    points[i  ][j+1][k  ],  //points[i   + (countY * j  ) + (countZ * countY * k  )],
-                    points[i+1][j+1][k  ],  //points[i+1 + (countY * j+1) + (countZ * countY * k  )],
-                    points[i+1][j+1][k+1],  //points[i+1 + (countY * j+1) + (countZ * countY * k+1)],
-                    points[i  ][j+1][k+1]   //points[i   + (countY * j+1) + (countZ * countY * k+1)] 
+                    points[i  ][j  ][k  ],
+                    points[i+1][j  ][k  ],
+                    points[i+1][j  ][k+1],
+                    points[i  ][j  ][k+1],
+                    points[i  ][j+1][k  ],
+                    points[i+1][j+1][k  ],
+                    points[i+1][j+1][k+1],
+                    points[i  ][j+1][k+1] 
                 };
 
                 int cubeIndex = 0;
@@ -306,10 +292,8 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
 
     std::vector<Triangle> triangles;
 
-    const int maxTrizQnt = 2991;
+    const int maxTrizQnt = countX * countY * countZ * 5;
     const int totalPoints = countX * countY * countZ;
-
-    LOG("Quantidade maxima de triangulos: " << maxTrizQnt);
 
     ComputeShader* compute = new ComputeShader("resources/shaders/marching.compute");
 
@@ -326,8 +310,6 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
         glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &zero);
     }
 
-    LOG("Gerou Atomic Counter");
-
     // Setting up Triangles SSBO
     GLuint trianglesSSBO;
     {
@@ -341,8 +323,6 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
 
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
-
-    LOG("Gerou Triangle SSBO");
 
     // Setting up Points SSBO
     GLuint pointsSSBO;
@@ -368,8 +348,6 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
-    LOG("Gerou Points SSBO");
-
     // Dispatch Compute Shader
     glDispatchCompute(countX, countY, countZ);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -382,8 +360,6 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
         trizCount = trizCountPtr[0];
         glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     }
-
-    LOG("Triangles Generated: " << trizCount);
 
     // Retrieving Triangles Buffer Data
     TriangleSSBO* trianglesPtr = nullptr;
