@@ -1,7 +1,5 @@
 #include<core/program.hpp>
 
-    Cube*               wiredCube;
-
 /***
  * Construtor do Programa
 **/
@@ -22,8 +20,6 @@ void Program::onCreate() {
         glm::vec3(10.0f, 10.0f, 10.0f),
         baseShader
     );
-
-    start();
 }
 
 /***
@@ -35,13 +31,8 @@ void Program::start() {
     int countZ = param->worldBounds.z * param->pointDencity;
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
-    points = instantiatePointsGPU(countX, countY, countZ);
-    
-    if (param->useGPU) {
-        mesh = generateMeshGPU(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
-    } else {
-        mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
-    }
+    points = instantiatePoints(countX, countY, countZ);
+    mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
 
     std::cout << "Tempo para gerar mesh: " << Utils::currentTimeInMillis() - startTime << "ms. ";
     std::cout << 
@@ -117,56 +108,9 @@ Point*** Program::instantiatePoints(int countX, int countY, int countZ) {
     return points;
 }
 
-Point*** Program::instantiatePointsGPU(int countX, int countY, int countZ) {
-
-    const int buffSize = countX * countY * countZ * sizeof(Point);
-    
-    GLuint vertexSSbo;
-
-    GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-
-    ComputeShader* compute = new ComputeShader("resources/shaders/points.compute");
-
-    compute->enable();
-
-    glGenBuffers(1, &vertexSSbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, buffSize, NULL, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexSSbo);
-
-    Point* ssboPoints = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, buffSize, bufMask);
-
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glDispatchCompute(countX, countY, countZ);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
-    Point* ppt = (Point*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-
-    Point*** points = (Point***) malloc(sizeof(Point**) * countX); //TODO: Refatorar codigo para utilizar apenas array de pontos
-    for (int i = 0; i < countX; i++) {
-        points[i] = (Point**) malloc(sizeof(Point*) * countY);
-        for (int j = 0; j < countY; j++) {
-            points[i][j] = (Point*) malloc(sizeof(Point) * countZ);
-            for (int k = 0; k < countZ; k++) {
-                int currPos = k + (countY * j) + (countZ * countY * i);
-                Point p = ppt[currPos];
-                points[i][j][k] = p;
-            }
-        }
-    }
-
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    compute->disable();
-
-    return points;
-}
-
 Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) {
 
+    std::cout << "Gerando Mesh via Compute Shaders" << std::endl;
     std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
 
     std::vector<Triangle> triangles;
@@ -226,128 +170,6 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
             }
         }
     }
-
-    if (param->smooth) {
-        smoothShading(triangles);
-    } else {
-        flatShading(triangles);
-    }
-
-    std::cout << "Terminou de Gerar Mesh. Triangulos: " << triangles.size() << " Vertices: " << vertexBuff.size() << "  Indices: " << indicesBuff.size() << std::endl;
-
-    return new Mesh(indicesBuff, vertexBuff, shader);
-}
-
-Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shader) {
-
-    std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
-
-    std::vector<Triangle> triangles;
-
-    const int maxTrizQnt = countX * countY * countZ * 5;
-    const int totalPoints = countX * countY * countZ;
-
-    ComputeShader* compute = new ComputeShader("resources/shaders/marching.compute");
-
-    compute->enable();
-
-    // Setting up Atomic Counter Buffer
-    GLuint countBuff = 0;
-    {
-        GLuint zero = 0;
-        glGenBuffers(1, &countBuff);
-        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
-        glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, countBuff);
-        glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_COPY);
-        glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &zero);
-    }
-
-    // Setting up Triangles SSBO
-    GLuint trianglesSSBO;
-    {
-        glGenBuffers(1, &trianglesSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * maxTrizQnt, NULL, GL_STATIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, trianglesSSBO);
-
-        GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-        Triangle* trianglesBuff = (Triangle*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Triangle) * maxTrizQnt, bufMask);
-
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    }
-
-    // Setting up Points SSBO
-    GLuint pointsSSBO;
-    {
-        glGenBuffers(1, &pointsSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Point) * totalPoints, NULL, GL_STATIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, pointsSSBO);
-
-        GLint  bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-        Point* pointsBuff = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Point) * totalPoints, bufMask);
-
-        int curr = 0;
-        for(int i = 0; i < countX; i++) {
-            for(int j = 0; j < countY; j++) {
-                for(int k = 0; k < countZ; k++) {
-                    pointsBuff[curr++] = points[i][j][k];
-                    //LOG(pointsBuff[i].x << " " << pointsBuff[i].y << " " << pointsBuff[i].z << " " );
-                }
-            }
-        }
-
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    }
-
-    // Dispatch Compute Shader
-    glDispatchCompute(countX, countY, countZ);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    // Retrieving Triangles Count
-    GLuint trizCount;
-    {
-        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
-        GLuint* trizCountPtr = (GLuint*) glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_ONLY);
-        trizCount = trizCountPtr[0];
-        glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-    }
-
-    // Retrieving Triangles Buffer Data
-    Triangle* trianglesPtr = nullptr;
-    {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
-        trianglesPtr = (Triangle*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        for (int i = 0; i < trizCount; i++) {
-            Triangle t = trianglesPtr[i];
-            //LOG("X0 = " << t.ver0.x << " Y0 = " << t.ver0.y << " Z0 = " << t.ver0.z << " X1 = " << t.ver1.x << " Y1 = " << t.ver1.y << " Z1 = " << t.ver1.z << " X2 = " << t.ver2.x << " Y2 = " << t.ver2.y << " Z2 = " << t.ver2.z);
-            // triangles.push_back({ 
-            //     glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z), 
-            //     glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z), 
-            //     glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z), 
-            //     glm::vec3(t.normal.x, t.normal.y, t.normal.z) 
-            // });
-            
-            //triangles.push_back({ t.ver0, t.ver1, t.ver1, t.normal });
-
-            triangles.push_back(t);
-        }
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    }
-
-    // Retrieving Points Buffer Data
-    Point* pointsPtr = nullptr;
-    {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
-        pointsPtr = (Point*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        for (int i = 0; i < trizCount; i++) {
-            Point p = pointsPtr[i];
-            //LOG("X0 = " << p.x << " Y0 = " << p.y << " Z0 = " << p.z << " Value = " << p.value);
-        }
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    }
-
-    compute->disable();
 
     if (param->smooth) {
         smoothShading(triangles);

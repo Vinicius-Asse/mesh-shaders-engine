@@ -9,6 +9,7 @@
 #include<core/mesh.hpp>
 #include<core/cube.hpp>
 #include<core/sphere.hpp>
+#include<core/program.hpp>
 #include<core/computeshader.hpp>
 #include<core/parameters.hpp>
 #include<core/shader.hpp>
@@ -16,37 +17,26 @@
 
 #define LOG(msg) std::cout << msg << std::endl
 
-struct Point {
-    float x, y, z, value;
-};
-
-struct Vec4
-{
-    float x, y, z, w;
-};
-
-struct Triangle {
-    Vec4 ver0, ver1, ver2;
-    Vec4 normal;
-};
-
-class Program
+class Compute
 {
 private:
     std::vector<Vertex> vertexBuff;
     std::vector<GLint> indicesBuff;
 
-    Point*** points;
-    Mesh* mesh;
+    Point *points;
+    Mesh *mesh;
 
-    Cube* wiredCube;
+    Cube *wiredCube;
 
     Parameters *param;
+
+    ComputeShader *computeShader;
+    Shader *meshShader;
 
     void onCreate();
 
 public:
-    Program(Parameters*);
+    Compute(Parameters*);
 
     void start();
     void input(SDL_Event*);
@@ -54,12 +44,10 @@ public:
     void draw();
 
 private:
-    Point*** instantiatePoints(int, int, int);
-    Point*** instantiatePointsGPU(int, int, int);
-    Mesh* generateMesh(int, int, int, Shader*);
-    Mesh* generateMeshGPU(int, int, int, Shader*);
+    Point* instantiatePoints(int, int, int);
+    Mesh* generateMesh(int, int, int);
     glm::vec3 interpolate(Point, Point);
-    void smoothShading(std::vector<Triangle> triangles);
-    void flatShading(std::vector<Triangle> triangles);
+    void smoothShading(Triangle *triangles, int trizCount);
+    void flatShading(Triangle *triangles, int trizCount);
     bool pushUniqueVertices(std::unordered_map<glm::vec3, GLint>*, glm::vec3, glm::vec3, GLint);
 };

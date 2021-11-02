@@ -52,7 +52,7 @@ void mainLoop() {
         60.0f, window
     );
 
-    Program program(param);
+    Compute program(param);
 
     program.start();
 
