@@ -16,6 +16,7 @@
 double TimeDeltaTime;
 
 // Classes de Abstracoes
+#include "../../src/utils.cpp"
 #include "../../src/mesh.cpp"
 #include "../../src/program.cpp"
 #include "../../src/shader.cpp"

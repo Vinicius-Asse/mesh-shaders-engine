@@ -1,7 +1,5 @@
 #include<core/program.hpp>
 
-unsigned __int64 currentTimeInMillis();
-
     Cube*               wiredCube;
 
 /***
@@ -36,7 +34,7 @@ void Program::start() {
     int countY = param->worldBounds.y * param->pointDencity;
     int countZ = param->worldBounds.z * param->pointDencity;
 
-    unsigned __int64 startTime = currentTimeInMillis();
+    unsigned __int64 startTime = Utils::currentTimeInMillis();
     points = instantiatePointsGPU(countX, countY, countZ);
     
     if (param->useGPU) {
@@ -45,7 +43,7 @@ void Program::start() {
         mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
     }
 
-    std::cout << "Tempo para gerar mesh: " << currentTimeInMillis() - startTime << "ms. ";
+    std::cout << "Tempo para gerar mesh: " << Utils::currentTimeInMillis() - startTime << "ms. ";
     std::cout << 
         "{ " << 
                 "surfaceLevel: '" << std::to_string(param->surfaceLevel)           << "', " <<
@@ -105,12 +103,12 @@ Point*** Program::instantiatePoints(int countX, int countY, int countZ) {
         for (int j = 0; j < countY; j++) {
             points[i][j] = (Point*) malloc(sizeof(Point) * countZ);
             for (int k = 0; k < countZ; k++) {
-                float x = remap(i, 0, countX - 1, -5.0f, 5.0f);
-                float y = remap(j, 0, countY - 1, -5.0f, 5.0f);
-                float z = remap(k, 0, countZ - 1, -5.0f, 5.0f);
+                float x = Utils::remap(i, 0, countX - 1, -5.0f, 5.0f);
+                float y = Utils::remap(j, 0, countY - 1, -5.0f, 5.0f);
+                float z = Utils::remap(k, 0, countZ - 1, -5.0f, 5.0f);
                 points[i][j][k] = {
                     x, y, z,
-                    generateRandomValue(x, y, z, param->noiseScale, param->noiseDisplacement)
+                    Utils::generateNoise(x, y, z, param->noiseScale, param->noiseDisplacement)
                 };
             }
         }
@@ -173,11 +171,9 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
 
     std::vector<Triangle> triangles;
     
-    for (int i = 0; i < countX; i++) {
-        for (int j = 0; j < countY; j++) {
-            for (int k = 0; k < countZ; k++) {
-                if (!isValidCube(i, j, k)) continue;
-
+    for (int i = 0; i < countX - 1; i++) {
+        for (int j = 0; j < countY - 1; j++) {
+            for (int k = 0; k < countZ - 1; k++) {
                 Point corners[8] = {
                     points[i  ][j  ][k  ],
                     points[i+1][j  ][k  ],
@@ -221,7 +217,7 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
 
                     triangles.push_back({
                         vec0, vec1, vec2,
-                        getNormalVector(vec0, vec1, vec2)
+                        Utils::getNormalVector(vec0, vec1, vec2)
                     });
                 }
             }
@@ -359,27 +355,6 @@ Mesh* Program::generateMeshGPU(int countX, int countY, int countZ, Shader* shade
     return new Mesh(indicesBuff, vertexBuff, shader);
 }
 
-GLfloat Program::generateRandomValue(float _x, float _y, float _z, float scale, glm::vec3 displacement) {
-        float x = _x / 100.0f * scale + displacement.x;
-        float y = _y / 100.0f * scale + displacement.y;
-        float z = _z / 100.0f * scale + displacement.z;
-
-        float ab = glm::perlin(glm::vec2(x, y));
-        float bc = glm::perlin(glm::vec2(y, z));
-        float ac = glm::perlin(glm::vec2(x, z));
-        float ba = glm::perlin(glm::vec2(y, x));
-        float cb = glm::perlin(glm::vec2(z, y));
-        float ca = glm::perlin(glm::vec2(z, x));
-
-        float result = (ab + bc + ac + ba + cb + ca) / 6.0f;
-        //float result = remap(glm::distance(glm::vec3(_x, _y, _z) + displacement, glm::vec3(0, 0, 0)) * scale, 0, 100.0f, 0, 1);
-        //float result = (_x == -5 || _x == 5 || _y == -5 || _y == 5 || _z == -5 || _z == 5) ? 1 : 0;
-
-        //std::cout << result << std::endl;
-
-        return remap(result, 0, 1.0f, 1, -1);
-}
-
 glm::vec3 Program::interpolate(Point a, Point b) {
     glm::vec3 aPos = glm::vec3(a.x, a.y, a.z);
     glm::vec3 bPos = glm::vec3(b.x, b.y, b.z);
@@ -390,39 +365,6 @@ glm::vec3 Program::interpolate(Point a, Point b) {
     } else {
         return (aPos + bPos) / 2.0f;
     }
-}
-
-GLfloat Program::remap(float value, float fromLow, float fromHigh, float toLow, float toHigh) {
-    return toLow + (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow);
-}
-
-bool Program::isValidLine(int i, int j, int k)
-{
-    if (i < 0 || i >= param->worldBounds.x * param->pointDencity) return false;
-    if (j < 0 || j >= param->worldBounds.y * param->pointDencity) return false;
-    if (k < 0 || k >= param->worldBounds.z * param->pointDencity) return false;
-
-    return true;
-}
-
-bool Program::isValidCube(int i, int j, int k)
-{
-    return isValidLine(i+1, j, k) && isValidLine(i, j+1, k) && isValidLine(i, j, k+1) &&
-            isValidLine(i+1, j, k+1) && isValidLine(i, j+1, k+1) && isValidLine(i+1, j+1, k) &&
-            isValidLine(i+1, j+1, k+1);
-}
-
-Vertex Program::createVertex(glm::vec3 position, glm::vec3 normal) {
-    return {
-        { position.x, position.y, position.z},
-        { 1.0f, 1.0f, 1.0f },
-        { normal.x, normal.y, normal.z }
-    };
-}
-
-glm::vec3 Program::getNormalVector(glm::vec3 a, glm::vec3 b, glm::vec3 c) {
-    glm::vec3 dir = glm::cross((b - a), (c - a));
-    return glm::normalize(dir);
 }
 
 void Program::smoothShading(std::vector<Triangle> triangles) {
@@ -448,9 +390,9 @@ void Program::flatShading(std::vector<Triangle> triangles) {
 
     for (int i = 0; i < triangles.size(); i++)
     {
-        vertexBuff.push_back(createVertex(triangles[i].ver0, triangles[i].normal));
-        vertexBuff.push_back(createVertex(triangles[i].ver1, triangles[i].normal));
-        vertexBuff.push_back(createVertex(triangles[i].ver2, triangles[i].normal));
+        vertexBuff.push_back(Utils::createVertex(triangles[i].ver0, triangles[i].normal));
+        vertexBuff.push_back(Utils::createVertex(triangles[i].ver1, triangles[i].normal));
+        vertexBuff.push_back(Utils::createVertex(triangles[i].ver2, triangles[i].normal));
 
         indicesBuff.push_back(i * 3 + 0);
         indicesBuff.push_back(i * 3 + 1);
@@ -461,7 +403,7 @@ void Program::flatShading(std::vector<Triangle> triangles) {
 bool Program::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
     if (map->find(position) == map->end()) {
         map->insert(std::make_pair(position, current));
-        vertexBuff.push_back(createVertex(position, normal));
+        vertexBuff.push_back(Utils::createVertex(position, normal));
         indicesBuff.push_back(current);
 
         return true;
@@ -469,10 +411,4 @@ bool Program::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm:
         indicesBuff.push_back(map->at(position));
         return false;
     }
-}
-
-unsigned __int64 currentTimeInMillis() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-        .time_since_epoch())
-        .count();
 }

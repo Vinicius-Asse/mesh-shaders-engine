@@ -2,10 +2,9 @@
 
 #include<SDL2/SDL.h>
 #include<glm/glm.hpp>
-#include<glm/gtc/noise.hpp>
 #include<unordered_map>
-#include<chrono>
 
+#include<core/utils.hpp>
 #include<core/camera.hpp>
 #include<core/mesh.hpp>
 #include<core/cube.hpp>
@@ -63,15 +62,9 @@ public:
 private:
     Point*** instantiatePoints(int, int, int);
     Point*** instantiatePointsGPU(int, int, int);
-    GLfloat generateRandomValue(float, float, float, float, glm::vec3);
-    GLfloat remap(float, float, float, float, float);
     Mesh* generateMesh(int, int, int, Shader*);
     Mesh* generateMeshGPU(int, int, int, Shader*);
-    bool isValidLine(int, int, int);
-    bool isValidCube(int, int, int);
     glm::vec3 interpolate(Point, Point);
-    Vertex createVertex(glm::vec3, glm::vec3);
-    glm::vec3 getNormalVector(glm::vec3, glm::vec3, glm::vec3);
     void smoothShading(std::vector<Triangle> triangles);
     void flatShading(std::vector<Triangle> triangles);
     bool pushUniqueVertices(std::unordered_map<glm::vec3, GLint>*, glm::vec3, glm::vec3, GLint);
