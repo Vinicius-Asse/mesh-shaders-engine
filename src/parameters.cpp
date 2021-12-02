@@ -7,7 +7,7 @@ Parameters::Parameters()
     noiseDisplacement   = glm::vec3(0.0f , 0.0f , 0.0f);
     noiseScale          = 10.0f;
     surfaceLevel        = 0.0f;
-    pointDencity        = 1.0f;
+    surfaceResolution   = 8.0f;
     smooth              = false;
     linearInterp        = false;
     useGPU              = false;

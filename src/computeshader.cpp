@@ -47,7 +47,29 @@ unsigned int ComputeShader::createShader(std::string shaderStr) {
     unsigned int vs = compileShader(GL_COMPUTE_SHADER, shaderStr);
 
     glAttachShader(program, vs);
+
     glLinkProgram(program);
+
+    GLint status;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (GL_FALSE == status)
+    {
+        std::cout << "Failed to link shader program!" << std::endl;
+        GLint logLen;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLen);
+        if (logLen > 0)
+        {
+            GLsizei written;
+            std::string(logLen, ' ');
+            std::vector<GLchar> infoLog(logLen);
+            glGetProgramInfoLog(program, logLen, &written, &infoLog[0]);
+            std::cout << "Program log: " << std::endl << infoLog.data() << std::endl;
+
+            glDeleteProgram(program);
+            abort();
+        }
+    }
+
     glValidateProgram(program);
 
     glDeleteShader(vs);

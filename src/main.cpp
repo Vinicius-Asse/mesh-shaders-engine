@@ -20,6 +20,12 @@ int main(int argc, char** argv) {
 }
 
 void setupWindow(const char *title){
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    
     window = SDL_CreateWindow(
         title,
         SDL_WINDOWPOS_UNDEFINED,
@@ -39,6 +45,8 @@ void setupWindow(const char *title){
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, 0);
 
+    printf("Versao OPENGL: %s\n", glGetString(GL_VERSION));
+
     SDL_GL_SetSwapInterval(0);
 }
 
@@ -52,9 +60,11 @@ void mainLoop() {
         60.0f, window
     );
 
-    Compute program(param);
+    Compute compute(param);
 
-    program.start();
+    Program program(param);
+
+    if (param->useGPU) compute.start(); else program.start();
 
     running = true;
 
@@ -85,12 +95,12 @@ void mainLoop() {
                         case SDLK_RIGHT: param->noiseDisplacement.x -= 0.5f;         changedMesh = true; break;
                         case SDLK_UP:    param->noiseDisplacement.z += 0.5f;         changedMesh = true; break;
                         case SDLK_DOWN:  param->noiseDisplacement.z -= 0.5f;         changedMesh = true; break;
-                        case SDLK_i:     param->noiseScale += 0.5f;                  changedMesh = true; break;
-                        case SDLK_o:     param->noiseScale -= 0.5f;                  changedMesh = true; break;
+                        case SDLK_i:     param->noiseScale *= 2.0f;                  changedMesh = true; break;
+                        case SDLK_o:     param->noiseScale *= 0.5f;                  changedMesh = true; break;
                         case SDLK_q:     param->surfaceLevel -= 0.1f;                changedMesh = true; break;
                         case SDLK_e:     param->surfaceLevel += 0.1f;                changedMesh = true; break;
-                        case SDLK_t:     param->pointDencity += 0.5f;                changedMesh = true; break;
-                        case SDLK_y:     param->pointDencity -= 0.5f;                changedMesh = true; break;
+                        case SDLK_t:     param->surfaceResolution *= 2.0f;           changedMesh = true; break;
+                        case SDLK_y:     param->surfaceResolution *= 0.5f;           changedMesh = true; break;
                         case SDLK_k:     param->smooth       = !param->smooth;       changedMesh = true; break;
                         case SDLK_j:     param->linearInterp = !param->linearInterp; changedMesh = true; break;
                         case SDLK_g:     param->useGPU       = !param->useGPU;       changedMesh = true; break;
@@ -103,12 +113,13 @@ void mainLoop() {
             camera.handleInputs(e);
         }
 
-        if (changedMesh) program.start();
+        if (changedMesh) 
+            if (param->useGPU) compute.start(); else program.start();
 
         // UPDATE
         {
             camera.update();
-            program.update();
+            if (param->useGPU) compute.update(); else program.update();
         }
 
         // DRAW
@@ -117,7 +128,7 @@ void mainLoop() {
             glClearColor(0.07f, 0.13f, 0.17f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            program.draw();
+            if (param->useGPU) compute.draw(); else program.draw();
 
             //END DRAW: Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);

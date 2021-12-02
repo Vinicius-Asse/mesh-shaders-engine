@@ -26,9 +26,9 @@ void Program::onCreate() {
  * Método Executado Quando o Programa é Iniciado
 **/
 void Program::start() {
-    int countX = param->worldBounds.x * param->pointDencity;
-    int countY = param->worldBounds.y * param->pointDencity;
-    int countZ = param->worldBounds.z * param->pointDencity;
+    int countX = param->surfaceResolution;
+    int countY = param->surfaceResolution;
+    int countZ = param->surfaceResolution;
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
     points = instantiatePoints(countX, countY, countZ);
@@ -64,16 +64,14 @@ void Program::update() { }
 void Program::draw() {
 
     // Turn on wireframe mode
-    glPolygonMode(GL_FRONT, GL_LINE);
-    glPolygonMode(GL_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDisable(GL_CULL_FACE);
 
     // Draw the box
     wiredCube->draw();
 
     // Turn off wireframe mode
-    glPolygonMode(GL_FRONT, GL_FILL);
-    glPolygonMode(GL_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
 
     // Draw Generated Mesh

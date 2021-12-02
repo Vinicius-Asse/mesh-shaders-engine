@@ -6,10 +6,7 @@
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(std430, binding=0) buffer Points {
-    vec4 PositionValue[];
-};
-
+layout(std430, binding = 0) buffer Points { vec4 PositionValue[]; };
 
 float remap(float value, float fromLow, float fromHigh, float toLow, float toHigh) {
     return toLow + (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow);
@@ -27,7 +24,7 @@ void main()
     float y = remap(gidY, 0, gl_NumWorkGroups.y - 1, -5.0, 5.0);
     float z = remap(gidZ, 0, gl_NumWorkGroups.z - 1, -5.0, 5.0);
 
-    float value = snoise(vec3(x, y, z));
+    float value = snoise(vec3(x/4, y/4, z/4)) * 8.0f;
 
     PositionValue[currPos] = vec4(x, y, z, value);
 }

@@ -27,9 +27,9 @@ void Compute::onCreate() {
  * Método Executado Quando o Programa é Iniciado
 **/
 void Compute::start() {
-    int countX = param->worldBounds.x * param->pointDencity;
-    int countY = param->worldBounds.y * param->pointDencity;
-    int countZ = param->worldBounds.z * param->pointDencity;
+    int countX = param->surfaceResolution;
+    int countY = param->surfaceResolution;
+    int countZ = param->surfaceResolution;
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
     points = instantiatePoints(countX, countY, countZ);
@@ -65,16 +65,14 @@ void Compute::update() { }
 void Compute::draw() {
 
     // Turn on wireframe mode
-    glPolygonMode(GL_FRONT, GL_LINE);
-    glPolygonMode(GL_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDisable(GL_CULL_FACE);
 
     // Draw the box
     wiredCube->draw();
 
     // Turn off wireframe mode
-    glPolygonMode(GL_FRONT, GL_FILL);
-    glPolygonMode(GL_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
 
     // Draw Generated Mesh
@@ -134,6 +132,10 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
 
     computeShader->enable();
 
+    // SURFACE LEVEL UNIFORM
+    int slLoc = glGetUniformLocation(computeShader->uId, "u_surfaceLevel");
+    glUniform1f(slLoc, param->surfaceLevel);
+
     // Setting up Atomic Counter Buffer
     GLuint countBuff = 0;
     {
@@ -177,8 +179,29 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
+    // Setting up TrizTable SSBO
+    GLuint trizTable;
+    {
+        glGenBuffers(1, &trizTable);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trizTable);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * 4096 , NULL, GL_STATIC_READ);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, trizTable);
+
+        GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+        int* trizTablePtr = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int) * 4096, bufMask);
+
+        int c = 0;
+        for(int i = 0; i < 256; i++) {
+            for(int j = 0; j < 16; j++) {
+                trizTablePtr[c++] = triTable[i][j];
+            }
+        }
+        
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    }
+
     // Dispatch Compute Shader
-    glDispatchCompute(countX, countY, countZ);
+    glDispatchCompute(countX/8, countY/8, countZ/8);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     // Retrieving Triangles Count
@@ -196,18 +219,18 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
         trianglesPtr = (Triangle*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
         // for (int i = 0; i < trizCount; i++) {
-        //     Triangle t = trianglesPtr[i];
-        //     //LOG("X0 = " << t.ver0.x << " Y0 = " << t.ver0.y << " Z0 = " << t.ver0.z << " X1 = " << t.ver1.x << " Y1 = " << t.ver1.y << " Z1 = " << t.ver1.z << " X2 = " << t.ver2.x << " Y2 = " << t.ver2.y << " Z2 = " << t.ver2.z);
-        //     // triangles.push_back({ 
-        //     //     glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z), 
-        //     //     glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z), 
-        //     //     glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z), 
-        //     //     glm::vec3(t.normal.x, t.normal.y, t.normal.z) 
-        //     // });
+        //      Triangle t = trianglesPtr[i];
+        //      LOG("X0 = " << t.ver0.x << " Y0 = " << t.ver0.y << " Z0 = " << t.ver0.z << " X1 = " << t.ver1.x << " Y1 = " << t.ver1.y << " Z1 = " << t.ver1.z << " X2 = " << t.ver2.x << " Y2 = " << t.ver2.y << " Z2 = " << t.ver2.z);
+        // //     // triangles.push_back({ 
+        // //     //     glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z), 
+        // //     //     glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z), 
+        // //     //     glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z), 
+        // //     //     glm::vec3(t.normal.x, t.normal.y, t.normal.z) 
+        // //     // });
             
-        //     //triangles.push_back({ t.ver0, t.ver1, t.ver1, t.normal });
+        // //     //triangles.push_back({ t.ver0, t.ver1, t.ver1, t.normal });
 
-        //     triangles.push_back(t);
+        // //     triangles.push_back(t);
         // }
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
@@ -250,7 +273,7 @@ void Compute::smoothShading(Triangle *triangles, int trizCount) {
         glm::vec3 v0 = glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z);
         glm::vec3 v1 = glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z);
         glm::vec3 v2 = glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z);
-        glm::vec3 normal = glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z);
+        glm::vec3 normal = glm::vec3(t.normal.x, t.normal.y, t.normal.z);
 
         if (pushUniqueVertices(&map, v0, normal, curr)) curr++;
         if (pushUniqueVertices(&map, v1, normal, curr)) curr++;

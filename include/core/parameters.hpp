@@ -14,7 +14,7 @@ public:
     glm::vec3 noiseDisplacement;
     float noiseScale;
     float surfaceLevel;
-    float pointDencity;
+    float surfaceResolution;
     bool  smooth;
     bool  linearInterp;
     bool  useGPU;
