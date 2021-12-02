@@ -205,7 +205,7 @@ void Program::smoothShading(std::vector<Triangle> triangles) {
         glm::vec3 v0 = glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z);
         glm::vec3 v1 = glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z);
         glm::vec3 v2 = glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z);
-        glm::vec3 normal = glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z);
+        glm::vec3 normal = glm::vec3(t.normal.x, t.normal.y, t.normal.z);
 
         if (pushUniqueVertices(&map, v0, normal, curr)) curr++;
         if (pushUniqueVertices(&map, v1, normal, curr)) curr++;
