@@ -99,8 +99,10 @@ void mainLoop() {
                         case SDLK_o:     param->noiseScale *= 0.5f;                  changedMesh = true; break;
                         case SDLK_q:     param->surfaceLevel -= 0.1f;                changedMesh = true; break;
                         case SDLK_e:     param->surfaceLevel += 0.1f;                changedMesh = true; break;
-                        case SDLK_t:     param->surfaceResolution *= 2.0f;           changedMesh = true; break;
-                        case SDLK_y:     param->surfaceResolution *= 0.5f;           changedMesh = true; break;
+                        case SDLK_t:     param->surfaceResolution += 8.0f;           changedMesh = true; break;
+                        case SDLK_y:     param->surfaceResolution -= 8.0f;           changedMesh = true; break;
+                        case SDLK_z:     param->smoothIntersect += 0.25f;            changedMesh = true; break;
+                        case SDLK_x:     param->smoothIntersect -= 0.25f;            changedMesh = true; break;
                         case SDLK_k:     param->smooth       = !param->smooth;       changedMesh = true; break;
                         case SDLK_j:     param->linearInterp = !param->linearInterp; changedMesh = true; break;
                         case SDLK_g:     param->useGPU       = !param->useGPU;       changedMesh = true; break;
