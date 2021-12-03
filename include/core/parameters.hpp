@@ -15,6 +15,7 @@ public:
     float noiseScale;
     float surfaceLevel;
     float surfaceResolution;
+    float smoothIntersect;
     bool  smooth;
     bool  linearInterp;
     bool  useGPU;

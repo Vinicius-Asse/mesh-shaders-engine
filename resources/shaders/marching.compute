@@ -2,7 +2,7 @@
 #extension GL_ARB_compute_shader : enable
 #extension GL_ARB_shader_storage_buffer_object : enable
 
-#include "resources/shaders/include/tables.compute"
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
 struct Triangle {
     vec4 v0;
@@ -11,23 +11,19 @@ struct Triangle {
     vec4 norm;
 };
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+layout(std430, binding = 1) buffer Triangles { Triangle Data[]; };
+//layout(std430, binding = 2) buffer Points    { vec4 points[]; };
+layout(std430, binding = 3) buffer TriTable  { int triTable[]; };
 
 layout(binding = 0) uniform atomic_uint trianglesCount;
 
-layout(std430, binding = 1) buffer Triangles { Triangle Data[]; };
-layout(std430, binding = 2) buffer Points    { vec4 points[]; };
-layout(std430, binding = 3) buffer TriTable  { int triTable[]; };
-
 uniform float u_surfaceLevel;
+uniform float u_smooth;
+uniform vec4 u_points[3];
 
-ivec3 getId() {
-    return ivec3(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y, gl_GlobalInvocationID.z);
-}
+#include "resources/shaders/include/utils.compute"
+#include "resources/shaders/include/tables.compute"
 
-uint currPosFromCord(uint x, uint y, uint z) {
-    return x + (gl_NumWorkGroups.y * gl_WorkGroupSize.y * y) + (gl_NumWorkGroups.y * gl_WorkGroupSize.y * gl_NumWorkGroups.z * gl_WorkGroupSize.z * z);
-}
 
 vec4 getNormalVector(Triangle t) {
     vec3 a = vec3(t.v0.x, t.v0.y, t.v0.z);
@@ -36,7 +32,6 @@ vec4 getNormalVector(Triangle t) {
 
     return vec4(normalize(cross(b - a, c - a)), 1.0);
 }
-
 
 vec4 interpolate(vec4 a, vec4 b) {
     vec3 aPos = vec3(a.x, a.y, a.z);
@@ -48,38 +43,56 @@ vec4 interpolate(vec4 a, vec4 b) {
     //return (a + b) / 2.0f;
 }
 
-int getTriTableIndex(int x, int y) {
-    return y + (x * 16);
+const int getTriTableIndex(int _x, int _y) {
+    return _y + (_x * 16);
 }
 
-const int getConstIndex(int v) {
-    for(int i = 0; i <= v && i < 16; i++) {
-        if (i == v) {
-            return i;
-        }
+vec4 getPoint(uint _x, uint _y, uint _z){
+    float x = remap(_x, 0, gl_NumWorkGroups.x * gl_WorkGroupSize.x - 1, -5.0, 5.0);
+    float y = remap(_y, 0, gl_NumWorkGroups.y * gl_WorkGroupSize.y - 1, -5.0, 5.0);
+    float z = remap(_z, 0, gl_NumWorkGroups.z * gl_WorkGroupSize.z - 1, -5.0, 5.0);
+
+    float value = 5;
+    for (int i = 0; i < 3; i++) {
+        float distanteToPoint = distance(vec3(x, y, z), vec3(u_points[i].x, u_points[i].y, u_points[i].z));
+        value = smoothMin(remap(abs(distanteToPoint), 0, 5.5, -1, 1), value, u_smooth);
     }
+
+    return vec4(x, y, z, value);
 }
 
-void main()
-{
+
+void main() {
     ivec3 id = getId();
 
-    if (id.x >= gl_NumWorkGroups.x * gl_WorkGroupSize.x - 1 || 
+    if (
+        id.x >= gl_NumWorkGroups.x * gl_WorkGroupSize.x - 1 || 
         id.y >= gl_NumWorkGroups.y * gl_WorkGroupSize.y - 1 || 
         id.z >= gl_NumWorkGroups.z * gl_WorkGroupSize.z - 1
-        ) return;
+    ) return;
 
     uint currPos = currPosFromCord(id.x, id.y, id.z);
 
+    // vec4 corners[8] = {
+    //     points[currPosFromCord(id.x    , id.y    , id.z    )],
+    //     points[currPosFromCord(id.x + 1, id.y    , id.z    )],
+    //     points[currPosFromCord(id.x + 1, id.y    , id.z + 1)],
+    //     points[currPosFromCord(id.x    , id.y    , id.z + 1)],
+    //     points[currPosFromCord(id.x    , id.y + 1, id.z    )],
+    //     points[currPosFromCord(id.x + 1, id.y + 1, id.z    )],
+    //     points[currPosFromCord(id.x + 1, id.y + 1, id.z + 1)],
+    //     points[currPosFromCord(id.x    , id.y + 1, id.z + 1)]
+    // };
+
     vec4 corners[8] = {
-        points[currPosFromCord(id.x    , id.y    , id.z    )],
-        points[currPosFromCord(id.x + 1, id.y    , id.z    )],
-        points[currPosFromCord(id.x + 1, id.y    , id.z + 1)],
-        points[currPosFromCord(id.x    , id.y    , id.z + 1)],
-        points[currPosFromCord(id.x    , id.y + 1, id.z    )],
-        points[currPosFromCord(id.x + 1, id.y + 1, id.z    )],
-        points[currPosFromCord(id.x + 1, id.y + 1, id.z + 1)],
-        points[currPosFromCord(id.x    , id.y + 1, id.z + 1)]
+        getPoint(id.x    , id.y    , id.z    ),
+        getPoint(id.x + 1, id.y    , id.z    ),
+        getPoint(id.x + 1, id.y    , id.z + 1),
+        getPoint(id.x    , id.y    , id.z + 1),
+        getPoint(id.x    , id.y + 1, id.z    ),
+        getPoint(id.x + 1, id.y + 1, id.z    ),
+        getPoint(id.x + 1, id.y + 1, id.z + 1),
+        getPoint(id.x    , id.y + 1, id.z + 1)
     };
 
     int index = 0;

@@ -8,6 +8,7 @@ Parameters::Parameters()
     noiseScale          = 10.0f;
     surfaceLevel        = 0.0f;
     surfaceResolution   = 8.0f;
+    smoothIntersect     = 2.0f;
     smooth              = false;
     linearInterp        = false;
     useGPU              = false;

@@ -108,7 +108,7 @@ Point*** Program::instantiatePoints(int countX, int countY, int countZ) {
 
 Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) {
 
-    std::cout << "Gerando Mesh via Compute Shaders" << std::endl;
+    std::cout << "Gerando Mesh em CPU" << std::endl;
     std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
 
     std::vector<Triangle> triangles;

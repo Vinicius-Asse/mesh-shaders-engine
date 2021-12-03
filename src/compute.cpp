@@ -32,7 +32,7 @@ void Compute::start() {
     int countZ = param->surfaceResolution;
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
-    points = instantiatePoints(countX, countY, countZ);
+    //points = instantiatePoints(countX, countY, countZ);
     mesh = generateMesh(countX, countY, countZ);
 
     std::cout << "Tempo para gerar mesh: " << Utils::currentTimeInMillis() - startTime << "ms. ";
@@ -127,14 +127,27 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
 
     std::vector<Triangle> triangles;
 
-    const int maxTrizQnt = countX * countY * countZ * 5;
-    const int totalPoints = countX * countY * countZ;
+    const int maxTrizQnt = countX * countY * countZ;
 
     computeShader->enable();
 
     // SURFACE LEVEL UNIFORM
     int slLoc = glGetUniformLocation(computeShader->uId, "u_surfaceLevel");
     glUniform1f(slLoc, param->surfaceLevel);
+
+    // SMOOTH INTERSECTION UNIFORM
+    int siLoc = glGetUniformLocation(computeShader->uId, "u_smooth");
+    glUniform1f(siLoc, param->smoothIntersect);
+
+    // POINTS LEVEL UNIFORM
+    GLfloat pts[12] = {
+          0.0f,  3.0f,  0.0f,  0.0f,
+          5.0f,  -3.0f,  0.0f,  0.0f,
+          0.0f,  -2.5f, -3.5f,  0.0f
+    };
+
+    int ptsLoc = glGetUniformLocation(computeShader->uId, "u_points");
+    glUniform4fv(ptsLoc, 12, pts);
 
     // Setting up Atomic Counter Buffer
     GLuint countBuff = 0;
@@ -161,23 +174,23 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
-    // Setting up Points SSBO
-    GLuint pointsSSBO;
-    {
-        glGenBuffers(1, &pointsSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Point) * totalPoints, NULL, GL_STATIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, pointsSSBO);
+    // // Setting up Points SSBO
+    // GLuint pointsSSBO;
+    // {
+    //     glGenBuffers(1, &pointsSSBO);
+    //     glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
+    //     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Point) * totalPoints, NULL, GL_STATIC_DRAW);
+    //     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, pointsSSBO);
 
-        GLint  bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-        Point* pointsBuff = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Point) * totalPoints, bufMask);
+    //     GLint  bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+    //     Point* pointsBuff = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Point) * totalPoints, bufMask);
 
-        for(int i = 0; i < countX * countY * countZ; i++) {
-            pointsBuff[i] = points[i];
-        }
+    //     for(int i = 0; i < countX * countY * countZ; i++) {
+    //         pointsBuff[i] = points[i];
+    //     }
 
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    }
+    //     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    // }
 
     // Setting up TrizTable SSBO
     GLuint trizTable;
@@ -232,18 +245,6 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
 
         // //     triangles.push_back(t);
         // }
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    }
-
-    // Retrieving Points Buffer Data
-    Point* pointsPtr = nullptr;
-    {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
-        pointsPtr = (Point*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        for (int i = 0; i < trizCount; i++) {
-            Point p = pointsPtr[i];
-            //LOG("X0 = " << p.x << " Y0 = " << p.y << " Z0 = " << p.z << " Value = " << p.value);
-        }
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
