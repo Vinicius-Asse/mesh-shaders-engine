@@ -2,8 +2,13 @@
 #define MAIN_HEADER
 
 // Bibliotecas Principais
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_sdl.h>
+#include <imgui/imgui_impl_opengl3.h>
+
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -41,7 +46,7 @@ double TimeDeltaTime;
 // Definicao de Funcoes
 void setupWindow(const char*);
 void finishError(std::string);
-void mainLoop();
+void mainLoop(ImGuiIO&);
 double timeControl();
 
 void GLAPIENTRY MessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);

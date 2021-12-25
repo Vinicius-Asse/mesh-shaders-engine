@@ -10,7 +10,27 @@ int main(int argc, char** argv) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) finishError("Nao foi possivel inicializar o SDL");
 
     setupWindow("Marching Cubes");
-    mainLoop();
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForOpenGL(window, context);
+    ImGui_ImplOpenGL3_Init("#version 450");
+
+    mainLoop(io);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
 
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
@@ -50,7 +70,7 @@ void setupWindow(const char *title){
     SDL_GL_SetSwapInterval(0);
 }
 
-void mainLoop() {
+void mainLoop(ImGuiIO& io) {
     SDL_Event e;
 
     Parameters *param = new Parameters();
@@ -76,6 +96,12 @@ void mainLoop() {
 
         bool changedMesh = false;
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+
+        // Ignoring Inputs if mouse is hovering an IMGUI Element
+        ImGui_ImplSDL2_ProcessEvent(&e);
         // INPUT HANDLER
         while(SDL_PollEvent(&e) != 0){
             switch(e.type) {
@@ -112,9 +138,12 @@ void mainLoop() {
                     break;
             }
 
-            camera.handleInputs(e);
-        }
+            if (!io.WantCaptureMouse) {
+                camera.handleInputs(e);
+            }
 
+        }
+    
         if (changedMesh) 
             if (param->useGPU) compute.start(); else program.start();
 
@@ -131,6 +160,13 @@ void mainLoop() {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             if (param->useGPU) compute.draw(); else program.draw();
+
+            ImGui::Begin("Janela de testes!");
+            ImGui::Text("Hello World!");
+            ImGui::End();
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             //END DRAW: Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);
