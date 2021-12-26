@@ -47,6 +47,8 @@ void Compute::start() {
                 "GPU: '"          << std::to_string(param->useGPU)                 <<
         " }" << 
         std::endl;
+
+    meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);
 }
 
 /***
@@ -125,7 +127,7 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
     std::cout << "Gerando Mesh via Compute Shaders" << std::endl;
     std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
 
-    std::vector<Triangle> triangles;
+    //std::vector<Triangle> triangles;
 
     const int maxTrizQnt = countX * countY * countZ;
 
@@ -256,7 +258,11 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
         flatShading(trianglesPtr, trizCount);
     }
 
-    std::cout << "Terminou de Gerar Mesh. Triangulos: " << triangles.size() << " Vertices: " << vertexBuff.size() << "  Indices: " << indicesBuff.size() << std::endl;
+    meshInfo["trizCount"] = std::to_string(trizCount);
+    meshInfo["vertexCount"] = std::to_string(vertexBuff.size());
+    meshInfo["indicesCount"] = std::to_string(indicesBuff.size());
+
+    std::cout << "Terminou de Gerar Mesh. Triangulos: " << trizCount << " Vertices: " << vertexBuff.size() << "  Indices: " << indicesBuff.size() << std::endl;
 
     return new Mesh(indicesBuff, vertexBuff, meshShader);
 }

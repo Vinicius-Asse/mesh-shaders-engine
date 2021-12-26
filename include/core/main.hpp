@@ -40,14 +40,15 @@ double TimeDeltaTime;
 #include <vector>
 
 // Constantes
-#define SCREEN_WIDTH    640
-#define SCREEN_HEIGHT   480
+#define SCREEN_WIDTH    1280
+#define SCREEN_HEIGHT   600
 
 // Definicao de Funcoes
 void setupWindow(const char*);
 void finishError(std::string);
 void mainLoop(ImGuiIO&);
 double timeControl();
+int getFramerate(Uint32);
 
 void GLAPIENTRY MessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
 
