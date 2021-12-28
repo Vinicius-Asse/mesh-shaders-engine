@@ -125,9 +125,6 @@ Point* Compute::instantiatePoints(int countX, int countY, int countZ) {
 Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
 
     std::cout << "Gerando Mesh via Compute Shaders" << std::endl;
-    std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
-
-    //std::vector<Triangle> triangles;
 
     const int maxTrizQnt = countX * countY * countZ;
 
@@ -140,6 +137,10 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
     // SMOOTH INTERSECTION UNIFORM
     int siLoc = glGetUniformLocation(computeShader->uId, "u_smooth");
     glUniform1f(siLoc, param->smoothIntersect);
+
+    // LINEAR INTERSECTION UNIFORM
+    int liLoc = glGetUniformLocation(computeShader->uId, "u_linear");
+    glUniform1ui(liLoc, param->linearInterp ? 1 : 0);
 
     // POINTS LEVEL UNIFORM
     GLfloat pts[12] = {
@@ -169,38 +170,15 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * maxTrizQnt, NULL, GL_STATIC_DRAW);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, trianglesSSBO);
-
-        GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-        Triangle* trianglesBuff = (Triangle*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Triangle) * maxTrizQnt, bufMask);
-
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
-    // // Setting up Points SSBO
-    // GLuint pointsSSBO;
-    // {
-    //     glGenBuffers(1, &pointsSSBO);
-    //     glBindBuffer(GL_SHADER_STORAGE_BUFFER, pointsSSBO);
-    //     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Point) * totalPoints, NULL, GL_STATIC_DRAW);
-    //     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, pointsSSBO);
-
-    //     GLint  bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-    //     Point* pointsBuff = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(Point) * totalPoints, bufMask);
-
-    //     for(int i = 0; i < countX * countY * countZ; i++) {
-    //         pointsBuff[i] = points[i];
-    //     }
-
-    //     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    // }
-
     // Setting up TrizTable SSBO
-    GLuint trizTable;
+    GLuint trizTableSSBO;
     {
-        glGenBuffers(1, &trizTable);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trizTable);
+        glGenBuffers(1, &trizTableSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trizTableSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * 4096 , NULL, GL_STATIC_READ);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, trizTable);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, trizTableSSBO);
 
         GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
         int* trizTablePtr = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int) * 4096, bufMask);
@@ -233,36 +211,24 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
     {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
         trianglesPtr = (Triangle*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        // for (int i = 0; i < trizCount; i++) {
-        //      Triangle t = trianglesPtr[i];
-        //      LOG("X0 = " << t.ver0.x << " Y0 = " << t.ver0.y << " Z0 = " << t.ver0.z << " X1 = " << t.ver1.x << " Y1 = " << t.ver1.y << " Z1 = " << t.ver1.z << " X2 = " << t.ver2.x << " Y2 = " << t.ver2.y << " Z2 = " << t.ver2.z);
-        // //     // triangles.push_back({ 
-        // //     //     glm::vec3(t.ver0.x, t.ver0.y, t.ver0.z), 
-        // //     //     glm::vec3(t.ver1.x, t.ver1.y, t.ver1.z), 
-        // //     //     glm::vec3(t.ver2.x, t.ver2.y, t.ver2.z), 
-        // //     //     glm::vec3(t.normal.x, t.normal.y, t.normal.z) 
-        // //     // });
-            
-        // //     //triangles.push_back({ t.ver0, t.ver1, t.ver1, t.normal });
-
-        // //     triangles.push_back(t);
-        // }
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
+    // Releasing buffers
+    glDeleteBuffers(1, &trianglesSSBO);
+    glDeleteBuffers(1, &trizTableSSBO);
+    glDeleteBuffers(1, &countBuff);
+
     computeShader->disable();
 
-    if (param->smooth) {
-        smoothShading(trianglesPtr, trizCount);
-    } else {
+    if (param->smooth) 
+        smoothShading(trianglesPtr, trizCount); 
+    else 
         flatShading(trianglesPtr, trizCount);
-    }
 
     meshInfo["trizCount"] = std::to_string(trizCount);
     meshInfo["vertexCount"] = std::to_string(vertexBuff.size());
     meshInfo["indicesCount"] = std::to_string(indicesBuff.size());
-
-    std::cout << "Terminou de Gerar Mesh. Triangulos: " << trizCount << " Vertices: " << vertexBuff.size() << "  Indices: " << indicesBuff.size() << std::endl;
 
     return new Mesh(indicesBuff, vertexBuff, meshShader);
 }

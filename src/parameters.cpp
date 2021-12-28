@@ -11,7 +11,7 @@ Parameters::Parameters()
     smoothIntersect     = 2.0f;
     smooth              = false;
     linearInterp        = false;
-    useGPU              = false;
+    useGPU              = true;
 }
 
 Parameters::~Parameters() {}

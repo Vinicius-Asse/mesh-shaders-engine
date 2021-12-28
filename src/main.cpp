@@ -195,7 +195,7 @@ void mainLoop(ImGuiIO& io) {
             if (ImGui::Checkbox("Interpolação Linear", &param->linearInterp))
                 remesh = true;
 
-            if (ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 10, "Resolucao da Malha %d")) {
+            if (ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "Resolucao da Malha %d")) {
                 param->surfaceResolution = 8 * resolutionMultiplier;
                 remesh = true;
             }
