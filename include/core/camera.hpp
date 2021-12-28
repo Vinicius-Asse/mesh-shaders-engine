@@ -24,8 +24,10 @@ public:
     static Camera* MainCamera;
 
     SDL_Window* window;
-    glm::vec3 ligthDir    = glm::vec3(0.2f, -0.8f, -0.6f);
+    glm::vec3 ligthDir    = glm::vec3(0.0f, 0.0f, -1.0f);
     glm::vec3 ligthColor  = glm::vec3(1.0f, 1.0f, 1.0f);
+    
+    bool fixedLight;
 
     Camera(glm::vec3 position, float fov, SDL_Window *window);
     //~Camera();

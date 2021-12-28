@@ -4,6 +4,9 @@
     SDL_GLContext    context;
     bool             running;
     const char*      title;
+
+    int              SCREEN_WIDTH  = 1280; 
+    int              SCREEN_HEIGHT = 600;
  
 int main(int argc, char** argv) {
 
@@ -49,7 +52,7 @@ void setupWindow(const char *title){
         SDL_WINDOWPOS_UNDEFINED,
         SCREEN_WIDTH,
         SCREEN_HEIGHT,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
+        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
     );
 
     context = SDL_GL_CreateContext(window);
@@ -72,14 +75,17 @@ void mainLoop(ImGuiIO& io) {
 
     Parameters *param = new Parameters();
 
-    bool useCompute = false;
+    bool useCompute      = true;
+    bool useCPU          = false;
+    bool useMeshShader   = false;
+    bool fullscreen      = false;
+    bool fixedLight      = false;
     bool lockAspectRatio = true;
-    int resolutionMultiplier = 1;
-    float worldBounds[3] = { 
-        param->worldBounds.x, 
-        param->worldBounds.y, 
-        param->worldBounds.z 
-    };
+
+    int resolutionMultiplier = param->surfaceResolution / 8.0f;
+
+    float lightDirection[3] = { 0.2f, -0.8f, -0.6f };
+    float worldBounds[3] = { param->worldBounds.x, param->worldBounds.y, param->worldBounds.z };
 
     Camera camera = Camera(
         glm::vec3(0.0f, 0.0f, 20.0f),
@@ -90,7 +96,7 @@ void mainLoop(ImGuiIO& io) {
 
     Program program(param);
 
-    if (param->useGPU) compute.start(); else program.start();
+    if (useCompute) compute.start(); else program.start();
 
     running = true;
 
@@ -116,13 +122,13 @@ void mainLoop(ImGuiIO& io) {
                 case SDL_QUIT:
                     running = false;
                     break;
-                case SDL_WINDOWEVENT:
-                    if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        int width, height;
-                        SDL_GetWindowSize(window, &width, &height);
-                        glViewport(0, 0, width, height);
-                    }
-                    break;
+                //case SDL_WINDOWEVENT:
+                //    if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
+                //        int width, height;
+                //        SDL_GetWindowSize(window, &width, &height);
+                //        glViewport(0, 0, width, height);
+                //    }
+                //    break;
                 //case SDL_KEYDOWN:
                 //    switch(e.key.keysym.sym) {
                 //        case SDLK_LEFT:  param->noiseDisplacement.x += 0.5f;         changedMesh = true; break;
@@ -153,12 +159,12 @@ void mainLoop(ImGuiIO& io) {
         }
     
         if (changedMesh) 
-            if (param->useGPU) compute.start(); else program.start();
+            if (useCompute) compute.start(); else program.start();
 
         // UPDATE
         {
             camera.update();
-            if (param->useGPU) compute.update(); else program.update();
+            if (useCompute) compute.update(); else program.update();
         }
 
         // DRAW
@@ -167,7 +173,7 @@ void mainLoop(ImGuiIO& io) {
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            if (param->useGPU) compute.draw(); else program.draw();
+            if (useCompute) compute.draw(); else program.draw();
 
             ImGui::Begin("Informações");
 
@@ -187,15 +193,63 @@ void mainLoop(ImGuiIO& io) {
 
             ImGui::Begin("Configurações");
 
-            bool remesh =
-                ImGui::Checkbox("Usar Compute Shaders", &param->useGPU)                                         ||
-                ImGui::Checkbox("Suavizar Malha", &param->smooth)                                               ||
-                ImGui::Checkbox("Interpolação Linear", &param->linearInterp)                                    ||
-                ImGui::Checkbox("Manter proporção", &lockAspectRatio)                                           ||
-                ImGui::SliderFloat3("Bordas da Simulacao", worldBounds, 1.0f, 100.0f, "%.3f", 1.0f)             ||
-                ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "Resolucao da Malha %d")         ||
-                ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "Nivel da Superficie %.3f")  ||
-                ImGui::DragFloat("Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f");
+            bool remesh = false;
+
+            ImGui::Text("Implementação");
+            if (ImGui::Checkbox("CPU", &useCPU)) {
+                useCPU = true;
+                useCompute = false;
+                useMeshShader = false;
+            }       
+            if (ImGui::Checkbox("Compute Shader", &useCompute)) {
+                useCPU = false;
+                useCompute = true;
+                useMeshShader = false;
+            }            
+            if (ImGui::Checkbox("Mesh Shader", &useMeshShader)) {
+                useCPU = false;
+                useCompute = false;
+                useMeshShader = true;
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::CollapsingHeader("Tela")) {
+                ImGui::Checkbox("Tela cheia", &fullscreen);
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::CollapsingHeader("Mundo")) {
+                remesh ^= ImGui::Checkbox("Iluminação fixa", &fixedLight);
+                
+                if (fixedLight) {
+                    ImGui::Text("Direção da iluminação");
+                    remesh ^= ImGui::SliderFloat3("##Direção da iluminação", lightDirection, -90, 90, "%.3f", 1.0f);
+                }
+
+                ImGui::Text("Bordas da Simulacao");
+                remesh ^= ImGui::DragFloat3("##WorldBounds", worldBounds, .01f, 0.0f, 100.0f, "%.3f", 1.0f);
+
+                ImGui::SameLine();
+                remesh ^= ImGui::Checkbox("1:1:1", &lockAspectRatio);
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::CollapsingHeader("Geometria")) {
+                remesh ^= ImGui::Checkbox("Suavizar Malha", &param->smooth);
+                remesh ^= ImGui::Checkbox("Interpolação Linear", &param->linearInterp);
+
+                ImGui::Text("Intencidade da Interpolação");
+                remesh ^= ImGui::DragFloat("##Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f");
+
+                ImGui::Text("Resolução da Malha");
+                remesh ^= ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "%d");
+
+                ImGui::Text("Nivel da Superficie");
+                remesh ^= ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "%.3f");
+            }
 
             ImGui::End();
 
@@ -214,7 +268,21 @@ void mainLoop(ImGuiIO& io) {
                 param->worldBounds.y = worldBounds[1];
                 param->worldBounds.z = worldBounds[2];
 
-                if (param->useGPU) compute.start(); else program.start();
+                camera.fixedLight = fixedLight;
+                if (!fixedLight) {
+                    camera.ligthDir.x = lightDirection[0];
+                    camera.ligthDir.y = lightDirection[1];
+                    camera.ligthDir.z = lightDirection[2];
+                }
+
+                if (useCompute) compute.start(); else program.start();
+            }
+
+            if (fullscreen) {
+                SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+            } 
+            else {
+                SDL_SetWindowFullscreen(window, 0);
             }
 
             ImGui::Render();

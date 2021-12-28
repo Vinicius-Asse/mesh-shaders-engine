@@ -7,6 +7,7 @@ Camera::Camera(glm::vec3 _position, float _fov, SDL_Window *_window) {
     fov = _fov;
     moveSpeed = 1.0f;
     window = _window;
+    fixedLight = false;
 
     if (MainCamera == nullptr) MainCamera = this;
 }
@@ -103,7 +104,12 @@ void Camera::update() {
             position += normalizedMov * ((moveSpeed * (float) TimeDeltaTime) * (running? 2.5f : 1.0f));
         }
 
+
         SDL_WarpMouseInWindow(window, screenWidth / 2, screenHeight / 2);
+    }
+    
+    if (!fixedLight) {
+        ligthDir = orientation;
     }
 }
 

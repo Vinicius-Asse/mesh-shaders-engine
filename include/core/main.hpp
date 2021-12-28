@@ -39,10 +39,6 @@ double TimeDeltaTime;
 #include <sstream>
 #include <vector>
 
-// Constantes
-#define SCREEN_WIDTH    1280
-#define SCREEN_HEIGHT   600
-
 // Definicao de Funcoes
 void setupWindow(const char*);
 void finishError(std::string);
