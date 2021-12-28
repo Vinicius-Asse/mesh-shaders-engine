@@ -200,7 +200,15 @@ void mainLoop(ImGuiIO& io) {
             ImGui::End();
 
             if (remesh) {
-                if (lockAspectRatio) worldBounds[2] = worldBounds[1] = worldBounds[0];
+                if (lockAspectRatio) {
+                    if (param->worldBounds.x != worldBounds[0])
+                        worldBounds[2] = worldBounds[1] = worldBounds[0];
+                    else if (param->worldBounds.y != worldBounds[1])
+                        worldBounds[2] = worldBounds[0] = worldBounds[1];
+                    else
+                        worldBounds[0] = worldBounds[1] = worldBounds[2];
+                }
+                
                 param->surfaceResolution = 8 * resolutionMultiplier;
                 param->worldBounds.x = worldBounds[0];
                 param->worldBounds.y = worldBounds[1];
