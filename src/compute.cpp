@@ -16,11 +16,13 @@ void Compute::onCreate() {
     computeShader = new ComputeShader("resources/shaders/marching.compute");
     meshShader    = new Shader("resources/shaders/base.glsl");
 
-    wiredCube = Cube::getInstance(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(10.0f, 10.0f, 10.0f),
-        meshShader
-    );
+    // wiredCube = Cube::getInstance(
+    //     glm::vec3(0.0f, 0.0f, 0.0f),
+    //     param->worldBounds,
+    //     meshShader
+    // );
+
+    std::cout << param->worldBounds.x << "\n";
 }
 
 /***
@@ -31,22 +33,16 @@ void Compute::start() {
     int countY = param->surfaceResolution;
     int countZ = param->surfaceResolution;
 
+    wiredCube = Cube::getInstance(
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        param->worldBounds,
+        meshShader
+    );
+
     unsigned __int64 startTime = Utils::currentTimeInMillis();
-    //points = instantiatePoints(countX, countY, countZ);
     mesh = generateMesh(countX, countY, countZ);
 
     std::cout << "Tempo para gerar mesh: " << Utils::currentTimeInMillis() - startTime << "ms. ";
-    std::cout << 
-        "{ " << 
-                "surfaceLevel: '" << std::to_string(param->surfaceLevel)           << "', " <<
-                "smooth: '"       << std::to_string(param->smooth)                 << "', " <<
-                "linearInterp: '" << std::to_string(param->linearInterp)           << "', " <<
-                // "distX:  '"       << std::to_string(param->noiseDisplacement.x)    << "', " <<
-                // "distY: '"        << std::to_string(param->noiseDisplacement.y)    << "', " <<
-                // "distZ: '"        << std::to_string(param->noiseDisplacement.z)    << "', " <<
-                "GPU: '"          << std::to_string(param->useGPU)                 <<
-        " }" << 
-        std::endl;
 
     meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);
 }
@@ -141,6 +137,10 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
     // LINEAR INTERSECTION UNIFORM
     int liLoc = glGetUniformLocation(computeShader->uId, "u_linear");
     glUniform1ui(liLoc, param->linearInterp ? 1 : 0);
+
+    // WORLD BOUNDS UNIFORM
+    int wbLoc = glGetUniformLocation(computeShader->uId, "u_worldBounds");
+    glUniform3f(wbLoc, param->worldBounds.x, param->worldBounds.y, param->worldBounds.z);
 
     // POINTS LEVEL UNIFORM
     GLfloat pts[12] = {

@@ -19,6 +19,7 @@ layout(binding = 0) uniform atomic_uint trianglesCount;
 uniform float u_surfaceLevel;
 uniform float u_smooth;
 uniform uint u_linear;
+uniform vec3 u_worldBounds;
 uniform vec4 u_points[3];
 
 #include "resources/shaders/include/utils.compute"
@@ -51,9 +52,9 @@ const int getTriTableIndex(int _x, int _y) {
 }
 
 vec4 getPoint(uint _x, uint _y, uint _z){
-    float x = remap(_x, 0, gl_NumWorkGroups.x * gl_WorkGroupSize.x - 1, -5.0, 5.0);
-    float y = remap(_y, 0, gl_NumWorkGroups.y * gl_WorkGroupSize.y - 1, -5.0, 5.0);
-    float z = remap(_z, 0, gl_NumWorkGroups.z * gl_WorkGroupSize.z - 1, -5.0, 5.0);
+    float x = remap(_x, 0, gl_NumWorkGroups.x * gl_WorkGroupSize.x - 1, -u_worldBounds.x/2.0f, u_worldBounds.x/2.0f);
+    float y = remap(_y, 0, gl_NumWorkGroups.y * gl_WorkGroupSize.y - 1, -u_worldBounds.y/2.0f, u_worldBounds.y/2.0f);
+    float z = remap(_z, 0, gl_NumWorkGroups.z * gl_WorkGroupSize.z - 1, -u_worldBounds.z/2.0f, u_worldBounds.z/2.0f);
 
     float value = 5;
     for (int i = 0; i < 3; i++) {

@@ -15,12 +15,9 @@ int main(int argc, char** argv) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
+    ImGui::StyleColorsClassic();
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForOpenGL(window, context);
@@ -73,13 +70,19 @@ void setupWindow(const char *title){
 void mainLoop(ImGuiIO& io) {
     SDL_Event e;
 
-    bool useCompute = false;
-    int resolutionMultiplier = 1;
-
     Parameters *param = new Parameters();
 
+    bool useCompute = false;
+    bool lockAspectRatio = true;
+    int resolutionMultiplier = 1;
+    float worldBounds[3] = { 
+        param->worldBounds.x, 
+        param->worldBounds.y, 
+        param->worldBounds.z 
+    };
+
     Camera camera = Camera(
-        glm::vec3(0.0f, 0.0f, 20.5f),
+        glm::vec3(0.0f, 0.0f, 20.0f),
         60.0f, window
     );
 
@@ -120,25 +123,25 @@ void mainLoop(ImGuiIO& io) {
                         glViewport(0, 0, width, height);
                     }
                     break;
-                case SDL_KEYDOWN:
-                    switch(e.key.keysym.sym) {
-                        case SDLK_LEFT:  param->noiseDisplacement.x += 0.5f;         changedMesh = true; break;
-                        case SDLK_RIGHT: param->noiseDisplacement.x -= 0.5f;         changedMesh = true; break;
-                        case SDLK_UP:    param->noiseDisplacement.z += 0.5f;         changedMesh = true; break;
-                        case SDLK_DOWN:  param->noiseDisplacement.z -= 0.5f;         changedMesh = true; break;
-                        case SDLK_i:     param->noiseScale *= 2.0f;                  changedMesh = true; break;
-                        case SDLK_o:     param->noiseScale *= 0.5f;                  changedMesh = true; break;
-                        //case SDLK_q:     param->surfaceLevel -= 0.1f;                changedMesh = true; break;
-                        //case SDLK_e:     param->surfaceLevel += 0.1f;                changedMesh = true; break;
-                        //case SDLK_t:     param->surfaceResolution += 8.0f;           changedMesh = true; break;
-                        //case SDLK_y:     param->surfaceResolution -= 8.0f;           changedMesh = true; break;
-                        //case SDLK_z:     param->smoothIntersect += 0.25f;            changedMesh = true; break;
-                        //case SDLK_x:     param->smoothIntersect -= 0.25f;            changedMesh = true; break;
-                        //case SDLK_k:     param->smooth       = !param->smooth;       changedMesh = true; break;
-                        //case SDLK_j:     param->linearInterp = !param->linearInterp; changedMesh = true; break;
-                        //case SDLK_g:     param->useGPU       = !param->useGPU;       changedMesh = true; break;
-                    }
-                    break;
+                //case SDL_KEYDOWN:
+                //    switch(e.key.keysym.sym) {
+                //        case SDLK_LEFT:  param->noiseDisplacement.x += 0.5f;         changedMesh = true; break;
+                //        case SDLK_RIGHT: param->noiseDisplacement.x -= 0.5f;         changedMesh = true; break;
+                //        case SDLK_UP:    param->noiseDisplacement.z += 0.5f;         changedMesh = true; break;
+                //        case SDLK_DOWN:  param->noiseDisplacement.z -= 0.5f;         changedMesh = true; break;
+                //        case SDLK_i:     param->noiseScale *= 2.0f;                  changedMesh = true; break;
+                //        case SDLK_o:     param->noiseScale *= 0.5f;                  changedMesh = true; break;
+                //        case SDLK_q:     param->surfaceLevel -= 0.1f;                changedMesh = true; break;
+                //        case SDLK_e:     param->surfaceLevel += 0.1f;                changedMesh = true; break;
+                //        case SDLK_t:     param->surfaceResolution += 8.0f;           changedMesh = true; break;
+                //        case SDLK_y:     param->surfaceResolution -= 8.0f;           changedMesh = true; break;
+                //        case SDLK_z:     param->smoothIntersect += 0.25f;            changedMesh = true; break;
+                //        case SDLK_x:     param->smoothIntersect -= 0.25f;            changedMesh = true; break;
+                //        case SDLK_k:     param->smooth       = !param->smooth;       changedMesh = true; break;
+                //        case SDLK_j:     param->linearInterp = !param->linearInterp; changedMesh = true; break;
+                //        case SDLK_g:     param->useGPU       = !param->useGPU;       changedMesh = true; break;
+                //    }
+                //    break;
                 default:
                     break;
             }
@@ -182,36 +185,29 @@ void mainLoop(ImGuiIO& io) {
 
             ImGui::End();
 
-            bool remesh = false;
-
             ImGui::Begin("Configurações");
 
-            if (ImGui::Checkbox("Usar Compute Shaders", &param->useGPU))
-                remesh = true;
-
-            if (ImGui::Checkbox("Suavizar Malha", &param->smooth))
-                remesh = true;
-
-            if (ImGui::Checkbox("Interpolação Linear", &param->linearInterp))
-                remesh = true;
-
-            if (ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "Resolucao da Malha %d")) {
-                param->surfaceResolution = 8 * resolutionMultiplier;
-                remesh = true;
-            }
-
-            if (ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "Nivel da Superficie %.3f")) {
-                remesh = true;
-            }
-
-            if (ImGui::DragFloat("Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f")) {
-                remesh = true;
-            }
+            bool remesh =
+                ImGui::Checkbox("Usar Compute Shaders", &param->useGPU)                                         ||
+                ImGui::Checkbox("Suavizar Malha", &param->smooth)                                               ||
+                ImGui::Checkbox("Interpolação Linear", &param->linearInterp)                                    ||
+                ImGui::Checkbox("Manter proporção", &lockAspectRatio)                                           ||
+                ImGui::SliderFloat3("Bordas da Simulacao", worldBounds, 1.0f, 100.0f, "%.3f", 1.0f)             ||
+                ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "Resolucao da Malha %d")         ||
+                ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "Nivel da Superficie %.3f")  ||
+                ImGui::DragFloat("Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f");
 
             ImGui::End();
 
-            if (remesh)
+            if (remesh) {
+                if (lockAspectRatio) worldBounds[0] = worldBounds[1] = worldBounds[2];
+                param->surfaceResolution = 8 * resolutionMultiplier;
+                param->worldBounds.x = worldBounds[0];
+                param->worldBounds.y = worldBounds[1];
+                param->worldBounds.z = worldBounds[2];
+
                 if (param->useGPU) compute.start(); else program.start();
+            }
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
