@@ -42,8 +42,6 @@ void Compute::start() {
     unsigned __int64 startTime = Utils::currentTimeInMillis();
     mesh = generateMesh(countX, countY, countZ);
 
-    std::cout << "Tempo para gerar mesh: " << Utils::currentTimeInMillis() - startTime << "ms. ";
-
     meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);
 }
 
@@ -119,9 +117,6 @@ Point* Compute::instantiatePoints(int countX, int countY, int countZ) {
 }
 
 Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
-
-    std::cout << "Gerando Mesh via Compute Shaders" << std::endl;
-
     const int maxTrizQnt = countX * countY * countZ;
 
     computeShader->enable();
