@@ -24,7 +24,7 @@ glm::vec3 Utils::getNormalVector(glm::vec3 a, glm::vec3 b, glm::vec3 c) {
     return glm::normalize(dir);
 }
 
-float Utils::generateNoise(float _x, float _y, float _z, float scale, glm::vec3 displacement) {
+float Utils::generateNoise(float _x, float _y, float _z, float scale, glm::vec3 displacement = glm::vec3(0,0,0)) {
     float x = _x / 100.0f * scale + displacement.x;
     float y = _y / 100.0f * scale + displacement.y;
     float z = _z / 100.0f * scale + displacement.z;
@@ -39,4 +39,8 @@ float Utils::generateNoise(float _x, float _y, float _z, float scale, glm::vec3 
     float result = (ab + bc + ac + ba + cb + ca) / 6.0f;
 
     return Utils::remap(result, 0, 1.0f, 1, -1);
+}
+
+float Utils::randomFloat(float min, float max) {
+    return glm::linearRand(min, max);
 }
