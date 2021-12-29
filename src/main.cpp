@@ -7,12 +7,15 @@
 
     int              SCREEN_WIDTH  = 1280; 
     int              SCREEN_HEIGHT = 600;
+    int              framerate;
  
 int main(int argc, char** argv) {
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) finishError("Nao foi possivel inicializar o SDL");
 
     setupWindow("Marching Cubes");
+
+    std::srand(static_cast<unsigned int>(std::time(nullptr))); 
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -92,7 +95,9 @@ void mainLoop(ImGuiIO& io) {
         60.0f, window
     );
 
-    Compute compute(param);
+    Point* points = createPoints(param);
+
+    Compute compute(param, points);
 
     Program program(param);
 
@@ -159,10 +164,11 @@ void mainLoop(ImGuiIO& io) {
         }
     
         if (changedMesh) 
-            if (useCompute) compute.start(); else program.start();
+            if (useCompute) compute.generateMesh(); else program.start();
 
         // UPDATE
         {
+            updatePoints(points, param);
             camera.update();
             if (useCompute) compute.update(); else program.update();
         }
@@ -177,13 +183,13 @@ void mainLoop(ImGuiIO& io) {
 
             ImGui::Begin("Informações");
 
-            std::string framerate        = "Quadros por Segundo      : " + std::to_string(getFramerate(startFrame));
+            std::string framerateStr     = "Quadros por Segundo      : " + std::to_string(framerate);
             std::string trizCount        = "Quantidade de Triangulos : " + compute.meshInfo["trizCount"];
             std::string vertexCount      = "Quantidade de Vertices   : " + compute.meshInfo["vertexCount"];
             std::string indexCount       = "Quantidade de Indices    : " + compute.meshInfo["indexCount"];
             std::string totalTimeGenMesh = "Tempo de Geração (ms)    : " + compute.meshInfo["timeGeneratingMesh"];
 
-            ImGui::Text(framerate.c_str());
+            ImGui::Text(framerateStr.c_str());
             ImGui::Text(trizCount.c_str());
             ImGui::Text(vertexCount.c_str());
             ImGui::Text(indexCount.c_str());
@@ -191,9 +197,24 @@ void mainLoop(ImGuiIO& io) {
 
             ImGui::End();
 
-            ImGui::Begin("Configurações");
+            bool remesh = true;
 
-            bool remesh = false;
+            ImGui::Begin("Meta Balls");
+
+            if (ImGui::Button("Resetar Esferas")) {
+                points = createPoints(param);
+                remesh = true;
+            }
+
+            ImGui::Text("Quantidade de Esferas");
+            remesh ^= ImGui::SliderInt("##pointsCount", &param->pointsCount, 0, 10);
+
+            ImGui::Text("Intensidade do Ruído");
+            remesh ^= ImGui::DragFloat("##noiseScale", &param->noiseScale, 0.0001f, 0, 1, "%.2f", 1.0f);
+
+            ImGui::End();
+
+            ImGui::Begin("Configurações");
 
             ImGui::Text("Implementação");
             if (ImGui::Checkbox("CPU", &useCPU)) {
@@ -294,6 +315,56 @@ void mainLoop(ImGuiIO& io) {
     }
 }
 
+Point* createPoints(Parameters *param) {
+    Point* points = (Point*) malloc(sizeof(Point) * param->pointsCount);
+
+    int minX = -param->worldBounds.x / 2.0f;
+    int maxX =  param->worldBounds.x / 2.0f;
+    
+    int minY = -param->worldBounds.y / 2.0f;
+    int maxY =  param->worldBounds.y / 2.0f;
+
+    int minZ = -param->worldBounds.z / 2.0f;
+    int maxZ =  param->worldBounds.z / 2.0f;
+
+    for (int i = 0; i < param->pointsCount; i++) {
+        glm::vec3 position = glm::ballRand(param->worldBounds.x / 2);
+        points[i] = {
+            position.x, position.y, position.z, // Position
+            0.0f,             // Value (não utilizado)
+            0.0f, 0.0f, 0.0f, // Velocity
+        };
+    }
+
+    return points;
+}
+
+void updatePoints(Point* points, Parameters* param) {
+    for (int i = 0; i < param->pointsCount; i++) {
+        Point p = points[i];
+
+        glm::vec3 position = glm::vec3(p.x, p.y, p.z);
+        glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
+
+        float dist = glm::distance2(position, origin);
+
+        glm::vec3 newVelocity = glm::vec3(p.vx, p.vy, p.vz) + glm::normalize(position) * glm::min(dist, 0.01f);
+        glm::vec3 newPosition = position - newVelocity * (float)TimeDeltaTime;
+
+        float noise = Utils::generateNoise(newVelocity.x, newVelocity.y, newVelocity.z, 1.0f);
+
+        p.x = newPosition.x + (noise * param->noiseScale);
+        p.y = newPosition.y + (noise * param->noiseScale);
+        p.z = newPosition.z + (noise * param->noiseScale);
+
+        p.vx = newVelocity.x;
+        p.vy = newVelocity.y;
+        p.vz = newVelocity.z;
+
+        points[i] = p;
+    }
+}
+
 void finishError(std::string err_msg) {
     std::cout << "Ocorreu um problema durante a execucao do programa: " << err_msg << std::endl;
     fflush(stdout);
@@ -311,6 +382,7 @@ double timeControl(){
 	
 	if (SDL_TICKS_PASSED(inicioFrame, timerFrame + 1000)){
         std::string title = "Matching Cubes (" + std::to_string(frames) + " FPS)";
+        framerate = frames;
         SDL_SetWindowTitle(window, title.c_str());
 
 		frames = 0;

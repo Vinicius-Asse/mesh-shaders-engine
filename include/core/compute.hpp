@@ -36,7 +36,7 @@ private:
     void onCreate();
 
 public:
-    Compute(Parameters*);
+    Compute(Parameters*, Point*);
 
     std::map<std::string, std::string> meshInfo;
 
@@ -44,10 +44,9 @@ public:
     void input(SDL_Event*);
     void update();
     void draw();
+    void generateMesh();
 
 private:
-    Point* instantiatePoints(int, int, int);
-    Mesh* generateMesh(int, int, int);
     glm::vec3 interpolate(Point, Point);
     void smoothShading(Triangle *triangles, int trizCount);
     void flatShading(Triangle *triangles, int trizCount);

@@ -3,8 +3,10 @@
 /***
  * Construtor do Programa
 **/
-Compute::Compute(Parameters *_param) {
+Compute::Compute(Parameters *_param, Point* _points) {
     param = _param;
+    points = _points;
+    mesh = nullptr;
 
     onCreate();
 }
@@ -15,24 +17,12 @@ Compute::Compute(Parameters *_param) {
 void Compute::onCreate() {
     computeShader = new ComputeShader("resources/shaders/marching.compute");
     meshShader    = new Shader("resources/shaders/base.glsl");
-
-    // wiredCube = Cube::getInstance(
-    //     glm::vec3(0.0f, 0.0f, 0.0f),
-    //     param->worldBounds,
-    //     meshShader
-    // );
-
-    std::cout << param->worldBounds.x << "\n";
 }
 
 /***
  * Método Executado Quando o Programa é Iniciado
 **/
 void Compute::start() {
-    int countX = param->surfaceResolution;
-    int countY = param->surfaceResolution;
-    int countZ = param->surfaceResolution;
-
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
         param->worldBounds,
@@ -40,7 +30,7 @@ void Compute::start() {
     );
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
-    mesh = generateMesh(countX, countY, countZ);
+    generateMesh();
 
     meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);
 }
@@ -82,41 +72,13 @@ void Compute::draw() {
  * 
 **/
 
-Point* Compute::instantiatePoints(int countX, int countY, int countZ) {
+void Compute::generateMesh() {
+    int countX = param->surfaceResolution;
+    int countY = param->surfaceResolution;
+    int countZ = param->surfaceResolution;
 
-    const int buffSize = countX * countY * countZ * sizeof(Point);
-    
-    GLuint vertexSSbo;
+    GLuint pointsCount = param->pointsCount;
 
-    GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-
-    ComputeShader* compute = new ComputeShader("resources/shaders/points.compute");
-
-    compute->enable();
-
-    glGenBuffers(1, &vertexSSbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, buffSize, NULL, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexSSbo);
-
-    Point* ssboPoints = (Point*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, buffSize, bufMask);
-
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glDispatchCompute(countX, countY, countZ);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, vertexSSbo);
-    Point* ppt = (Point*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    compute->disable();
-
-    return ppt;
-}
-
-Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
     const int maxTrizQnt = countX * countY * countZ;
 
     computeShader->enable();
@@ -133,22 +95,30 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
     int liLoc = glGetUniformLocation(computeShader->uId, "u_linear");
     glUniform1ui(liLoc, param->linearInterp ? 1 : 0);
 
+    // // POINTS COUNT UNIFORM
+    int pcLoc = glGetUniformLocation(computeShader->uId, "u_pointsCount");
+    glUniform1ui(pcLoc, pointsCount);
+
     // WORLD BOUNDS UNIFORM
     int wbLoc = glGetUniformLocation(computeShader->uId, "u_worldBounds");
     glUniform3f(wbLoc, param->worldBounds.x, param->worldBounds.y, param->worldBounds.z);
 
     // POINTS LEVEL UNIFORM
-    GLfloat pts[12] = {
-          0.0f,  3.0f,  0.0f,  0.0f,
-          5.0f,  -3.0f,  0.0f,  0.0f,
-          0.0f,  -2.5f, -3.5f,  0.0f
-    };
+    GLfloat* pts = (GLfloat*) malloc(sizeof(float) * 4 * pointsCount);
+    int curr = 0;
+    for(int i = 0; i < pointsCount; i++) {
+        pts[curr+0] = points[i].x;
+        pts[curr+1] = points[i].y;
+        pts[curr+2] = points[i].z;
+        pts[curr+3] = 1.0f;
+        curr+=4;
+    }
 
     int ptsLoc = glGetUniformLocation(computeShader->uId, "u_points");
-    glUniform4fv(ptsLoc, 12, pts);
+    glUniform4fv(ptsLoc, pointsCount, pts);
 
     // Setting up Atomic Counter Buffer
-    GLuint countBuff = 0;
+    GLuint countBuff;
     {
         GLuint zero = 0;
         glGenBuffers(1, &countBuff);
@@ -224,8 +194,10 @@ Mesh* Compute::generateMesh(int countX, int countY, int countZ) {
     meshInfo["trizCount"] = std::to_string(trizCount);
     meshInfo["vertexCount"] = std::to_string(vertexBuff.size());
     meshInfo["indicesCount"] = std::to_string(indicesBuff.size());
-
-    return new Mesh(indicesBuff, vertexBuff, meshShader);
+    
+    if (mesh != nullptr) mesh->free();
+    
+    mesh = new Mesh(indicesBuff, vertexBuff, meshShader);
 }
 
 void Compute::smoothShading(Triangle *triangles, int trizCount) {

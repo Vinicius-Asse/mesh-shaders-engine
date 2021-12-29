@@ -19,8 +19,9 @@ layout(binding = 0) uniform atomic_uint trianglesCount;
 uniform float u_surfaceLevel;
 uniform float u_smooth;
 uniform uint u_linear;
+uniform uint u_pointsCount;
 uniform vec3 u_worldBounds;
-uniform vec4 u_points[3];
+uniform vec4 u_points[15];
 
 #include "resources/shaders/include/utils.compute"
 #include "resources/shaders/include/tables.compute"
@@ -56,8 +57,8 @@ vec4 getPoint(uint _x, uint _y, uint _z){
     float y = remap(_y, 0, gl_NumWorkGroups.y * gl_WorkGroupSize.y - 1, -u_worldBounds.y/2.0f, u_worldBounds.y/2.0f);
     float z = remap(_z, 0, gl_NumWorkGroups.z * gl_WorkGroupSize.z - 1, -u_worldBounds.z/2.0f, u_worldBounds.z/2.0f);
 
-    float value = 5;
-    for (int i = 0; i < 3; i++) {
+    float value = 2.5;
+    for (int i = 0; i < u_pointsCount; i++) {
         float distanteToPoint = distance(vec3(x, y, z), vec3(u_points[i].x, u_points[i].y, u_points[i].z));
         value = smoothMin(remap(abs(distanteToPoint), 0, 5.5, -1, 1), value, u_smooth);
     }

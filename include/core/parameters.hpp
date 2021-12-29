@@ -12,6 +12,7 @@ public:
     
     glm::vec3 worldBounds;
     glm::vec3 noiseDisplacement;
+    int   pointsCount;
     float noiseScale;
     float surfaceLevel;
     float surfaceResolution;

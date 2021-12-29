@@ -5,10 +5,11 @@ Parameters::Parameters()
 {
     worldBounds         = glm::vec3(10.0f, 10.0f, 10.0f);
     noiseDisplacement   = glm::vec3(0.0f , 0.0f , 0.0f);
-    noiseScale          = 10.0f;
+    noiseScale          = 0.001f;
     surfaceLevel        = 0.0f;
     surfaceResolution   = 8.0f;
     smoothIntersect     = 2.0f;
+    pointsCount         = 10;
     smooth              = false;
     linearInterp        = false;
     useGPU              = true;

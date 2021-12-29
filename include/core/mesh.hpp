@@ -44,6 +44,7 @@ public:
     void unbind();
 
     void draw();
+    void free();
 };
 
 #endif

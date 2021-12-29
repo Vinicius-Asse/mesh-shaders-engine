@@ -18,6 +18,7 @@
 
 struct Point {
     float x, y, z, value;
+    float vx, vy, vz;
 };
 
 struct Vec4

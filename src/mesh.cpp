@@ -99,3 +99,10 @@ void Mesh::translate(glm::vec3 _position) {
 void Mesh::rotate(glm::vec3 _rotation) {
     model = glm::rotate(model, glm::radians(10.0f * (float) TimeDeltaTime), _rotation);
 }
+
+void Mesh::free() {
+    //std::cout << "Frreing Mesh" << std::endl;
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}

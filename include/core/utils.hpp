@@ -14,5 +14,6 @@ public:
     static Vertex createVertex(Vec4 position, Vec4 normal);
     static glm::vec3 getNormalVector(glm::vec3 a, glm::vec3 b, glm::vec3 c);
     static float generateNoise(float, float, float, float, glm::vec3);
+    static float randomFloat(float, float);
 };
 
