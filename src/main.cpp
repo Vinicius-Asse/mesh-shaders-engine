@@ -89,12 +89,10 @@ void mainLoop(ImGuiIO& io) {
     GLint maxDrawMeshShaderTaskQnt = 0;
     GLint maxMeshShaderOutputVertices = 0;
     GLint maxMeshShaderOutputPrimitives = 0;
-    //GLint maxMeshShaderGroupSize[] = {0, 0, 0};
     if (supportMeshShaders) {
         glGetIntegerv(GL_MAX_DRAW_MESH_TASKS_COUNT_NV, &maxDrawMeshShaderTaskQnt);
         glGetIntegerv(GL_MAX_MESH_OUTPUT_VERTICES_NV, &maxMeshShaderOutputVertices);
         glGetIntegerv(GL_MAX_MESH_OUTPUT_PRIMITIVES_NV, &maxMeshShaderOutputPrimitives);
-        //glGetIntegerv(GL_MAX_MESH_WORK_GROUP_SIZE_NV, maxMeshShaderGroupSize);
     }
 
     int resolutionMultiplier = param->surfaceResolution / 8.0f;
@@ -129,7 +127,7 @@ void mainLoop(ImGuiIO& io) {
         bool changedMesh = false;
 
         // Ignoring Inputs if mouse is hovering an IMGUI Element
-        //ImGui_ImplSDL2_ProcessEvent(&e);
+        ImGui_ImplSDL2_ProcessEvent(&e);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
@@ -196,6 +194,12 @@ void mainLoop(ImGuiIO& io) {
 
             if (useMeshShader) {
                 ms->enable();
+                glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
+
+                // MVP MATRIX UNIFORM
+                int mvpLoc = glGetUniformLocation(ms->uId, "MVP");
+                glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+
                 glDrawMeshTasksNV(0, 1);
                 ms->disable();
             } else if (useCompute) {
