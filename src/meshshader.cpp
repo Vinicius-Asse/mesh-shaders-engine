@@ -1,23 +1,25 @@
-#include<core/shader.hpp>
+#include<core/meshshader.hpp>
 
-Shader::Shader(const std::string& shaderPath) {
+MeshShader::MeshShader(const std::string& shaderPath) {
     composedShader = parseShader(shaderPath);
     uId = createShader(composedShader);
 }
 
-Shader::~Shader() {
+MeshShader::~MeshShader() {
     glDeleteProgram(uId);
 }
 
-void Shader::enable() {
+void MeshShader::enable() {
     glUseProgram(uId);
+    glBindProgramPipeline(pipeline);
 }
 
-void Shader::disable() {
+void MeshShader::disable() {
+    glBindProgramPipeline(0);
     glUseProgram(0);
 }
 
-ComposedShader Shader::parseShader(const std::string& filePath) {
+ComposedShader MeshShader::parseShader(const std::string& filePath) {
     std::ifstream stream(filePath);
 
     enum class ShaderType {
@@ -40,26 +42,58 @@ ComposedShader Shader::parseShader(const std::string& filePath) {
             ss[(int)type] << line << '\n';
         }
     }
+    
     return { ss[0].str(), ss[1].str(), ss[2].str() };
 }
 
-unsigned int Shader::createShader(ComposedShader composedShader) {
+unsigned int MeshShader::createShader(ComposedShader composedShader) {
     unsigned int program = glCreateProgram();
-    unsigned int vs = compileShader(GL_VERTEX_SHADER, composedShader.VertexShader);
+
+    glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
+
+    unsigned int ms = compileShader(GL_MESH_SHADER_NV, composedShader.MeshShader);
     unsigned int fs = compileShader(GL_FRAGMENT_SHADER, composedShader.FragmentShader);
 
-    glAttachShader(program, vs);
+    glAttachShader(program, ms);
     glAttachShader(program, fs);
+
     glLinkProgram(program);
+    
+    GLint status;
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (GL_FALSE == status)
+    {
+        std::cout << "Failed to link shader program!" << std::endl;
+        GLint logLen;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLen);
+        if (logLen > 0)
+        {
+            GLsizei written;
+            std::string(logLen, ' ');
+            std::vector<GLchar> infoLog(logLen);
+            glGetProgramInfoLog(program, logLen, &written, &infoLog[0]);
+            std::cout << "Program log: " << std::endl << infoLog.data() << std::endl;
+
+            glDeleteProgram(program);
+            abort();
+        }
+    }
+    
     glValidateProgram(program);
 
-    glDeleteShader(vs);
+    glDetachShader(program, ms);
+    glDetachShader(program, fs);
+    glDeleteShader(ms);
     glDeleteShader(fs);
 
+
+    glGenProgramPipelines(1, &pipeline);
+    glUseProgramStages(pipeline, GL_MESH_SHADER_BIT_NV | GL_FRAGMENT_SHADER_BIT, program);
+    
     return program;
 }
 
-unsigned int Shader::compileShader(unsigned int type, const std::string& source) {
+unsigned int MeshShader::compileShader(unsigned int type, const std::string& source) {
     unsigned int id = glCreateShader(type);
     const char* src = source.c_str();
     glShaderSource(id, 1, &src, nullptr);
@@ -72,7 +106,7 @@ unsigned int Shader::compileShader(unsigned int type, const std::string& source)
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
         char* message = (char*)alloca(sizeof(char) * length);
         glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "Vertex" : "Fragment") << " shader: " << message << std::endl;
+        std::cout << "Failed to compile compute shader: " << message << std::endl;
         glDeleteShader(id);
         return 0;
     }

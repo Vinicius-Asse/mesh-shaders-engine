@@ -1,35 +1,28 @@
-#ifndef SHADER_CLASS
-#define SHADER_CLASS
+#pragma once
 
 #include<glad/glad.h>
 #include<iostream>
 #include<fstream>
 #include<string>
 #include<sstream>
+#include<regex>
 
-struct ComposedShader
-{
-    std::string VertexShader;
-    std::string FragmentShader;
-    std::string MeshShader;
-};
 
-class Shader 
+class MeshShader 
 {
 private:
     ComposedShader composedShader;
     ComposedShader parseShader(const std::string& filePath);
-    unsigned int createShader(ComposedShader composedShader);
+    unsigned int createShader(ComposedShader ComposedShader);
     unsigned int compileShader(unsigned int type, const std::string& source);
 
 public:
-    Shader(const std::string& shaderPath);
-    ~Shader();
+    MeshShader(const std::string& shaderPath);
+    ~MeshShader();
 
     void enable();
     void disable();
     
     unsigned int uId;
+    unsigned int pipeline;
 };
-
-#endif

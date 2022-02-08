@@ -78,12 +78,24 @@ void mainLoop(ImGuiIO& io) {
 
     Parameters *param = new Parameters();
 
-    bool useCompute      = true;
-    bool useCPU          = false;
-    bool useMeshShader   = false;
-    bool fullscreen      = false;
-    bool fixedLight      = false;
-    bool lockAspectRatio = true;
+    bool useCompute         = true;
+    bool useCPU             = false;
+    bool useMeshShader      = false;
+    bool fullscreen         = false;
+    bool fixedLight         = false;
+    bool lockAspectRatio    = true;
+    bool supportMeshShaders = SDL_GL_ExtensionSupported("GL_NV_mesh_shader");
+
+    GLint maxDrawMeshShaderTaskQnt = 0;
+    GLint maxMeshShaderOutputVertices = 0;
+    GLint maxMeshShaderOutputPrimitives = 0;
+    //GLint maxMeshShaderGroupSize[] = {0, 0, 0};
+    if (supportMeshShaders) {
+        glGetIntegerv(GL_MAX_DRAW_MESH_TASKS_COUNT_NV, &maxDrawMeshShaderTaskQnt);
+        glGetIntegerv(GL_MAX_MESH_OUTPUT_VERTICES_NV, &maxMeshShaderOutputVertices);
+        glGetIntegerv(GL_MAX_MESH_OUTPUT_PRIMITIVES_NV, &maxMeshShaderOutputPrimitives);
+        //glGetIntegerv(GL_MAX_MESH_WORK_GROUP_SIZE_NV, maxMeshShaderGroupSize);
+    }
 
     int resolutionMultiplier = param->surfaceResolution / 8.0f;
 
@@ -101,7 +113,9 @@ void mainLoop(ImGuiIO& io) {
 
     Program program(param);
 
-    if (useCompute) compute.start(); else program.start();
+    MeshShader* ms = new MeshShader("resources/shaders/triangle.mesh");
+
+    if (useCompute) compute.start(); else if (useCPU) program.start();
 
     running = true;
 
@@ -115,7 +129,7 @@ void mainLoop(ImGuiIO& io) {
         bool changedMesh = false;
 
         // Ignoring Inputs if mouse is hovering an IMGUI Element
-        ImGui_ImplSDL2_ProcessEvent(&e);
+        //ImGui_ImplSDL2_ProcessEvent(&e);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
@@ -164,30 +178,63 @@ void mainLoop(ImGuiIO& io) {
         }
     
         if (changedMesh) 
-            if (useCompute) compute.generateMesh(); else program.start();
+            if (useCompute) compute.generateMesh(); else if (useCPU) program.start();
 
         // UPDATE
         {
             updatePoints(points, param);
             camera.update();
-            if (useCompute) compute.update(); else program.update();
+            if (useCompute) compute.update(); else if (useCPU) program.update();
         }
 
         // DRAW
         {
             //BEGIN DRAW: Clear Screen
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClearDepth(1.0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            if (useCompute) compute.draw(); else program.draw();
+            if (useMeshShader) {
+                ms->enable();
+                LOG("Enabled Mesh Shaderrrr");
+                glDrawMeshTasksNV(0, 1);
+                ms->disable();
+            } else if (useCompute) {
+                compute.draw();
+            } else {
+                program.draw();
+            }
 
             ImGui::Begin("Informações");
 
-            std::string framerateStr     = "Quadros por Segundo      : " + std::to_string(framerate);
-            std::string trizCount        = "Quantidade de Triangulos : " + compute.meshInfo["trizCount"];
-            std::string vertexCount      = "Quantidade de Vertices   : " + compute.meshInfo["vertexCount"];
-            std::string indexCount       = "Quantidade de Indices    : " + compute.meshInfo["indexCount"];
-            std::string totalTimeGenMesh = "Tempo de Geração (ms)    : " + compute.meshInfo["timeGeneratingMesh"];
+            std::string supportsMeshShadersStr = supportMeshShaders ?         
+                "Suporte à Mesh Shaders      : SIM" : "Suporte à Mesh Shaders   : NÃO";
+
+            ImGui::Text(supportsMeshShadersStr.c_str());
+
+            if (supportMeshShaders) {
+                std::string maxDrawMeshShaderTaskQntStr =    
+                    "Qnt. Max. Task Draw         : " + std::to_string(maxDrawMeshShaderTaskQnt); 
+
+                std::string maxMeshShaderOutputVerticesStr = 
+                    "Qnt. Max. Output Vertices   : " + std::to_string(maxMeshShaderOutputVertices);
+
+                std::string maxMeshShaderOutputPrimitivesStr = 
+                    "Qnt. Max. Output Primitivos : " + std::to_string(maxMeshShaderOutputPrimitives); 
+
+                ImGui::Text(maxDrawMeshShaderTaskQntStr.c_str());
+                ImGui::Text(maxMeshShaderOutputVerticesStr.c_str());
+                ImGui::Text(maxMeshShaderOutputPrimitivesStr.c_str());
+            }
+
+            ImGui::Separator();
+
+            std::string framerateStr        = "Quadros por Segundo      : " + std::to_string(framerate);
+            std::string trizCount           = "Quantidade de Triangulos : " + compute.meshInfo["trizCount"];
+            std::string vertexCount         = "Quantidade de Vertices   : " + compute.meshInfo["vertexCount"];
+            std::string indexCount          = "Quantidade de Indices    : " + compute.meshInfo["indexCount"];
+            std::string totalTimeGenMesh    = "Tempo de Geração (ms)    : " + compute.meshInfo["timeGeneratingMesh"];
+
 
             ImGui::Text(framerateStr.c_str());
             ImGui::Text(trizCount.c_str());
@@ -201,7 +248,7 @@ void mainLoop(ImGuiIO& io) {
 
             ImGui::Begin("Meta Balls");
 
-            if (ImGui::Button("Resetar Esferas")) {
+            if (ImGui::Button("Reiniciar Esferas")) {
                 points = createPoints(param);
                 remesh = true;
             }
@@ -221,17 +268,20 @@ void mainLoop(ImGuiIO& io) {
                 useCPU = true;
                 useCompute = false;
                 useMeshShader = false;
-            }       
+            }
             if (ImGui::Checkbox("Compute Shader", &useCompute)) {
                 useCPU = false;
                 useCompute = true;
                 useMeshShader = false;
-            }            
+            }
+
+            ImGui::BeginDisabled(!supportMeshShaders);
             if (ImGui::Checkbox("Mesh Shader", &useMeshShader)) {
                 useCPU = false;
                 useCompute = false;
                 useMeshShader = true;
             }
+            ImGui::EndDisabled();
 
             ImGui::Separator();
 
@@ -415,4 +465,8 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
     } else {
         //std::cout << "[WARNING] " << message << std::endl;
     }
+}
+
+bool supportsMeshShaders() {
+    return false;
 }

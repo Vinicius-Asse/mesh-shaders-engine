@@ -21,6 +21,9 @@
 // Variaveis Globais
 double TimeDeltaTime;
 
+#define LOG(msg) std::cout << msg << std::endl;
+
+
 // Classes de Abstracoes
 #include "../../src/utils.cpp"
 #include "../../src/mesh.cpp"
@@ -28,6 +31,7 @@ double TimeDeltaTime;
 #include "../../src/compute.cpp"
 #include "../../src/shader.cpp"
 #include "../../src/computeshader.cpp"
+#include "../../src/meshshader.cpp"
 #include "../../src/cube.cpp"
 #include "../../src/sphere.cpp"
 #include "../../src/camera.cpp"
@@ -50,9 +54,8 @@ void updatePoints(Point*, Parameters*);
 Point* createPoints(Parameters*);
 double timeControl();
 int getFramerate(Uint32);
+bool supportMeshShaders();
 
 void GLAPIENTRY MessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
-
-
 
 #endif

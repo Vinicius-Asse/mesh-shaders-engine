@@ -15,7 +15,6 @@
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
 
-#define LOG(msg) std::cout << msg << std::endl
 
 class Compute
 {

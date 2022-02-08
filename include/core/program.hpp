@@ -14,8 +14,6 @@
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
 
-#define LOG(msg) std::cout << msg << std::endl
-
 struct Point {
     float x, y, z, value;
     float vx, vy, vz;
