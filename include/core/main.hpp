@@ -30,8 +30,6 @@ double TimeDeltaTime;
 #include "../../src/program.cpp"
 #include "../../src/compute.cpp"
 #include "../../src/shader.cpp"
-#include "../../src/computeshader.cpp"
-#include "../../src/meshshader.cpp"
 #include "../../src/cube.cpp"
 #include "../../src/sphere.cpp"
 #include "../../src/camera.cpp"

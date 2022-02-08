@@ -44,3 +44,15 @@ float Utils::generateNoise(float _x, float _y, float _z, float scale, glm::vec3 
 float Utils::randomFloat(float min, float max) {
     return glm::linearRand(min, max);
 }
+
+std::string Utils::readFile(std::string& path) {
+    std::ifstream stream(path);
+
+    std::string line;
+    std::stringstream ss;
+    while (getline(stream, line)) {
+        ss << line << '\n';
+    }
+
+    return ss.str();
+}

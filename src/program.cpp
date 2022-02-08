@@ -13,7 +13,7 @@ Program::Program(Parameters *_param) {
  * Método Executado Quando o Programa é Criado
 **/
 void Program::onCreate() {
-    Shader* baseShader = new Shader("resources/shaders/base.glsl");
+    Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
 
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -32,7 +32,7 @@ void Program::start() {
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
     points = instantiatePoints(countX, countY, countZ);
-    mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl"));
+    mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER));
 
     std::cout << "Tempo para gerar mesh: " << Utils::currentTimeInMillis() - startTime << "ms. ";
     std::cout << 

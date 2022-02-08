@@ -10,7 +10,6 @@
 #include<core/cube.hpp>
 #include<core/sphere.hpp>
 #include<core/program.hpp>
-#include<core/computeshader.hpp>
 #include<core/parameters.hpp>
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
@@ -29,7 +28,7 @@ private:
 
     Parameters *param;
 
-    ComputeShader *computeShader;
+    Shader *computeShader;
     Shader *meshShader;
 
     void onCreate();

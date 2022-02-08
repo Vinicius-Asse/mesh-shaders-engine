@@ -15,8 +15,8 @@ Compute::Compute(Parameters *_param, Point* _points) {
  * Método Executado Quando o Programa é Criado
 **/
 void Compute::onCreate() {
-    computeShader = new ComputeShader("resources/shaders/marching.compute");
-    meshShader    = new Shader("resources/shaders/base.glsl");
+    computeShader = new Shader("resources/shaders/marching.compute", ShaderType::COMPUTE_SHADER);
+    meshShader    = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
 }
 
 /***

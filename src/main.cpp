@@ -113,7 +113,7 @@ void mainLoop(ImGuiIO& io) {
 
     Program program(param);
 
-    MeshShader* ms = new MeshShader("resources/shaders/triangle.mesh");
+    Shader* ms = new Shader("resources/shaders/triangle.mesh", ShaderType::MESH_SHADER);
 
     if (useCompute) compute.start(); else if (useCPU) program.start();
 
@@ -196,7 +196,6 @@ void mainLoop(ImGuiIO& io) {
 
             if (useMeshShader) {
                 ms->enable();
-                LOG("Enabled Mesh Shaderrrr");
                 glDrawMeshTasksNV(0, 1);
                 ms->disable();
             } else if (useCompute) {
