@@ -113,7 +113,7 @@ void mainLoop(ImGuiIO& io) {
 
     Program program(param);
 
-    Shader* ms = new Shader("resources/shaders/triangle.mesh", ShaderType::MESH_SHADER);
+    Shader* ms = new Shader("resources/shaders/mesh/test.glsl", ShaderType::MESH_SHADER);
 
     if (useCompute) compute.start(); else if (useCPU) program.start();
 
