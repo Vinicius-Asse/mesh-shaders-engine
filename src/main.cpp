@@ -61,7 +61,7 @@ void setupWindow(const char *title){
     context = SDL_GL_CreateContext(window);
     gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 
-    if (!window || !context) finishError("Nao foi possivel inicializar a Janela");
+    if (!window || !context) finishError("Nao foi possível inicializar a Janela");
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -210,9 +210,7 @@ void mainLoop(ImGuiIO& io) {
 
             ImGui::Begin("Informações");
 
-            std::string supportsMeshShadersStr = supportMeshShaders ?         
-                "Suporte à Mesh Shaders      : SIM" : "Suporte à Mesh Shaders   : NÃO";
-
+            std::string supportsMeshShadersStr = supportMeshShaders ? "Suporte à Mesh Shaders      : SIM" : "Suporte à Mesh Shaders   : NÃO";
             ImGui::Text(supportsMeshShadersStr.c_str());
 
             if (supportMeshShaders) {
@@ -349,7 +347,7 @@ void mainLoop(ImGuiIO& io) {
                     camera.ligthDir.z = lightDirection[2];
                 }
 
-                if (useCompute) compute.start(); else program.start();
+                if (useCompute) compute.start(); else if (useCPU) program.start();
             }
 
             if (fullscreen) {
@@ -419,7 +417,7 @@ void updatePoints(Point* points, Parameters* param) {
 }
 
 void finishError(std::string err_msg) {
-    std::cout << "Ocorreu um problema durante a execucao do programa: " << err_msg << std::endl;
+    std::cout << "Ocorreu um problema durante a execução do programa: " << err_msg << std::endl;
     fflush(stdout);
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", err_msg.c_str(), NULL);
     SDL_Quit();
@@ -444,8 +442,8 @@ double timeControl(){
 	
 	terminoFrame = inicioFrame;
 	
-	if (deltaTime < 1000 / 400) {
-		SDL_Delay(1000 / 400 - deltaTime);
+	if (deltaTime < 1) {
+		SDL_Delay(1 - deltaTime);
 	}
 
     return deltaTime;

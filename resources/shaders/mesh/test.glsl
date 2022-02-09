@@ -27,8 +27,8 @@ out PerVertexData
 uniform mat4 MVP;
 
 const vec3 vertices[8] = { 
-    vec3(-1.0,-1.0,1.0), vec3(1.0,-1.0,1.0), vec3(-1.0,1.0,1.0), vec3(1.0,1.0,1.0),     //FRONT VERTICES
-    vec3(-1.0,-1.0,-1.0), vec3(1.0,-1.0,-1.0), vec3(-1.0,1.0,-1.0), vec3(1.0,1.0,-1.0), //BACK VERTICES
+    vec3(-5.0,-5.0,5.0), vec3(5.0,-5.0,5.0), vec3(-5.0,5.0,5.0), vec3(5.0,5.0,5.0),     //FRONT VERTICES
+    vec3(-5.0,-5.0,-5.0), vec3(5.0,-5.0,-5.0), vec3(-5.0,5.0,-5.0), vec3(5.0,5.0,-5.0), //BACK VERTICES
 };
 
 const vec3 colors[4] = { 
@@ -71,62 +71,62 @@ void main()
 
     // BACK FACE First Triangle
     gl_PrimitiveIndicesNV[6] = 4;
-    gl_PrimitiveIndicesNV[7] = 5;
-    gl_PrimitiveIndicesNV[8] = 6;
+    gl_PrimitiveIndicesNV[7] = 6;
+    gl_PrimitiveIndicesNV[8] = 5;
 	gl_PrimitiveCountNV++;
 
 	// BACK FACE Second Triangle
     gl_PrimitiveIndicesNV[9]  = 6;
-    gl_PrimitiveIndicesNV[10] = 5;
-    gl_PrimitiveIndicesNV[11] = 7;
+    gl_PrimitiveIndicesNV[10] = 7;
+    gl_PrimitiveIndicesNV[11] = 5;
     gl_PrimitiveCountNV++;
 
     // TOP FACE First Triangle
     gl_PrimitiveIndicesNV[12] = 0;
-    gl_PrimitiveIndicesNV[13] = 1;
-    gl_PrimitiveIndicesNV[14] = 4;
+    gl_PrimitiveIndicesNV[13] = 4;
+    gl_PrimitiveIndicesNV[14] = 1;
 	gl_PrimitiveCountNV++;
 
 	// TOP FACE Second Triangle
-    gl_PrimitiveIndicesNV[15] = 4;
-    gl_PrimitiveIndicesNV[16] = 5;
-    gl_PrimitiveIndicesNV[17] = 0;
+    gl_PrimitiveIndicesNV[15] = 1;
+    gl_PrimitiveIndicesNV[16] = 4;
+    gl_PrimitiveIndicesNV[17] = 5;
     gl_PrimitiveCountNV++;
 
     // BOTTOM FACE First Triangle
-    gl_PrimitiveIndicesNV[18] = 12;
-    gl_PrimitiveIndicesNV[19] = 14;
-    gl_PrimitiveIndicesNV[20] = 13;
+    gl_PrimitiveIndicesNV[18] = 2;
+    gl_PrimitiveIndicesNV[19] = 3;
+    gl_PrimitiveIndicesNV[20] = 6;
 	gl_PrimitiveCountNV++;
 
 	// BOTTOM FACE Second Triangle
-    gl_PrimitiveIndicesNV[21] = 13;
-    gl_PrimitiveIndicesNV[22] = 14;
-    gl_PrimitiveIndicesNV[23] = 15;
+    gl_PrimitiveIndicesNV[21] = 3;
+    gl_PrimitiveIndicesNV[22] = 7;
+    gl_PrimitiveIndicesNV[23] = 6;
     gl_PrimitiveCountNV++;
 
     // LEFT FACE First Triangle
-    gl_PrimitiveIndicesNV[24] = 16;
-    gl_PrimitiveIndicesNV[25] = 18;
-    gl_PrimitiveIndicesNV[26] = 17;
+    gl_PrimitiveIndicesNV[24] = 0;
+    gl_PrimitiveIndicesNV[25] = 2;
+    gl_PrimitiveIndicesNV[26] = 6;
 	gl_PrimitiveCountNV++;
 
 	// LEFT FACE Second Triangle
-    gl_PrimitiveIndicesNV[27] = 17;
-    gl_PrimitiveIndicesNV[28] = 18;
-    gl_PrimitiveIndicesNV[29] = 19;
+    gl_PrimitiveIndicesNV[27] = 0;
+    gl_PrimitiveIndicesNV[28] = 6;
+    gl_PrimitiveIndicesNV[29] = 4;
     gl_PrimitiveCountNV++;
 
     // RIGTH FACE First Triangle
-    gl_PrimitiveIndicesNV[30] = 20;
-    gl_PrimitiveIndicesNV[31] = 21;
-    gl_PrimitiveIndicesNV[32] = 22;
+    gl_PrimitiveIndicesNV[30] = 1;
+    gl_PrimitiveIndicesNV[31] = 7;
+    gl_PrimitiveIndicesNV[32] = 3;
 	gl_PrimitiveCountNV++;
 
 	// RIGTH FACE Second Triangle
-    gl_PrimitiveIndicesNV[33] = 21;
-    gl_PrimitiveIndicesNV[34] = 23;
-    gl_PrimitiveIndicesNV[35] = 22;
+    gl_PrimitiveIndicesNV[33] = 1;
+    gl_PrimitiveIndicesNV[34] = 5;
+    gl_PrimitiveIndicesNV[35] = 7;
     gl_PrimitiveCountNV++;
 }
   
