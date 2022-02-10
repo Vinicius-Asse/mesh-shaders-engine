@@ -109,7 +109,7 @@ void mainLoop(ImGuiIO& io) {
 
     Compute compute(param, points);
 
-    Program program(param);
+    MarchingCubes program(param);
 
     Shader* ms = new Shader("resources/shaders/mesh/test.glsl", ShaderType::MESH_SHADER);
 

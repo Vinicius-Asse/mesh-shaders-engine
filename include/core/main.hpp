@@ -27,7 +27,7 @@ double TimeDeltaTime;
 // Classes de Abstracoes
 #include "../../src/utils.cpp"
 #include "../../src/mesh.cpp"
-#include "../../src/program.cpp"
+#include "../../src/marching_cubes.cpp"
 #include "../../src/compute.cpp"
 #include "../../src/shader.cpp"
 #include "../../src/cube.cpp"

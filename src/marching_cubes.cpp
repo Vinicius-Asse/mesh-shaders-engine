@@ -1,9 +1,9 @@
-#include<core/program.hpp>
+#include<core/marching_cubes.hpp>
 
 /***
  * Construtor do Programa
 **/
-Program::Program(Parameters *_param) {
+MarchingCubes::MarchingCubes(Parameters *_param) {
     param = _param;
 
     onCreate();
@@ -12,7 +12,7 @@ Program::Program(Parameters *_param) {
 /***
  * Método Executado Quando o Programa é Criado
 **/
-void Program::onCreate() {
+void MarchingCubes::onCreate() {
     Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
 
     wiredCube = Cube::getInstance(
@@ -25,7 +25,7 @@ void Program::onCreate() {
 /***
  * Método Executado Quando o Programa é Iniciado
 **/
-void Program::start() {
+void MarchingCubes::start() {
     int countX = param->surfaceResolution;
     int countY = param->surfaceResolution;
     int countZ = param->surfaceResolution;
@@ -51,17 +51,17 @@ void Program::start() {
 /***
  * Método Executado no Inicio de Cada Frame
 **/
-void Program::input(SDL_Event* e) { }
+void MarchingCubes::input(SDL_Event* e) { }
 
 /***
  * Método Executado Toda Frame
 **/
-void Program::update() { }
+void MarchingCubes::update() { }
 
 /***
  * Método Executado ao Fim de Toda Frame
 **/
-void Program::draw() {
+void MarchingCubes::draw() {
 
     // Turn on wireframe mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -85,7 +85,7 @@ void Program::draw() {
  * 
 **/
 
-Point*** Program::instantiatePoints(int countX, int countY, int countZ) {
+Point*** MarchingCubes::instantiatePoints(int countX, int countY, int countZ) {
     Point*** points = (Point***) malloc(sizeof(Point**) * countX);
     for (int i = 0; i < countX; i++) {
         points[i] = (Point**) malloc(sizeof(Point*) * countY);
@@ -106,7 +106,7 @@ Point*** Program::instantiatePoints(int countX, int countY, int countZ) {
     return points;
 }
 
-Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) {
+Mesh* MarchingCubes::generateMesh(int countX, int countY, int countZ, Shader* shader) {
 
     std::cout << "Gerando Mesh em CPU" << std::endl;
     std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
@@ -180,7 +180,7 @@ Mesh* Program::generateMesh(int countX, int countY, int countZ, Shader* shader) 
     return new Mesh(indicesBuff, vertexBuff, shader);
 }
 
-glm::vec3 Program::interpolate(Point a, Point b) {
+glm::vec3 MarchingCubes::interpolate(Point a, Point b) {
     glm::vec3 aPos = glm::vec3(a.x, a.y, a.z);
     glm::vec3 bPos = glm::vec3(b.x, b.y, b.z);
 
@@ -192,7 +192,7 @@ glm::vec3 Program::interpolate(Point a, Point b) {
     }
 }
 
-void Program::smoothShading(std::vector<Triangle> triangles) {
+void MarchingCubes::smoothShading(std::vector<Triangle> triangles) {
 
     vertexBuff.clear();
     indicesBuff.clear();
@@ -213,7 +213,7 @@ void Program::smoothShading(std::vector<Triangle> triangles) {
     }
 }
 
-void Program::flatShading(std::vector<Triangle> triangles) {
+void MarchingCubes::flatShading(std::vector<Triangle> triangles) {
 
     vertexBuff.clear();
     indicesBuff.clear();
@@ -230,7 +230,7 @@ void Program::flatShading(std::vector<Triangle> triangles) {
     }
 }
 
-bool Program::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
+bool MarchingCubes::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
     if (map->find(position) == map->end()) {
         map->insert(std::make_pair(position, current));
         vertexBuff.push_back(Utils::createVertex({position.x, position.y, position.z, 1.0f}, {normal.x, normal.y, normal.z, 1.0f}));

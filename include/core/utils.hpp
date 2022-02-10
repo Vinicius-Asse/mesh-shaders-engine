@@ -5,7 +5,7 @@
 #include<glm/gtc/noise.hpp>
 
 #include<core/mesh.hpp>
-#include<core/program.hpp>
+#include<core/marching_cubes.hpp>
 
 class Utils {
 public:

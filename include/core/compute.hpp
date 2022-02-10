@@ -9,7 +9,7 @@
 #include<core/mesh.hpp>
 #include<core/cube.hpp>
 #include<core/sphere.hpp>
-#include<core/program.hpp>
+#include<core/marching_cubes.hpp>
 #include<core/parameters.hpp>
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>

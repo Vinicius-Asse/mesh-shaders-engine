@@ -28,7 +28,7 @@ struct Triangle {
     Vec4 normal;
 };
 
-class Program
+class MarchingCubes
 {
 private:
     std::vector<Vertex> vertexBuff;
@@ -44,7 +44,7 @@ private:
     void onCreate();
 
 public:
-    Program(Parameters*);
+    MarchingCubes(Parameters*);
 
     void start();
     void input(SDL_Event*);
