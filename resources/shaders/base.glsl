@@ -11,7 +11,7 @@ out vec3 lDir;
 
 uniform mat4 MVP;
 uniform mat4 uModel;
-uniform vec4 ligthDir;
+uniform vec4 lightDir;
 
 void main()
 {
@@ -19,7 +19,7 @@ void main()
 
     vCol = aCol;
     vNorm = normalize(vec3(uModel * vec4(aNorm.xyz, 0.0)));
-    lDir = normalize(-ligthDir.xyz);
+    lDir = normalize(-lightDir.xyz);
 }
 
 #!fragment shader

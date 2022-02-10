@@ -109,7 +109,7 @@ void Camera::update() {
     }
     
     if (!fixedLight) {
-        ligthDir = orientation;
+        lightDir = orientation;
     }
 }
 

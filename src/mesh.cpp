@@ -44,8 +44,8 @@ Mesh::Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *_shad
 void Mesh::draw() {
     Camera* camera = Camera::MainCamera;
     glm::mat4 mvpMatrix = camera->getMVPMatrix(model);
-    glm::vec3 ligthDir = camera->ligthDir;
-    glm::vec3 ligthCol = camera->ligthColor;
+    glm::vec3 lightDir = camera->lightDir;
+    glm::vec3 ligthCol = camera->lightColor;
 
     shader->enable();
 
@@ -58,8 +58,8 @@ void Mesh::draw() {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
     // LIGTH DIRECTION UNIFORM
-    int ligthDirLoc = glGetUniformLocation(shader->uId, "ligthDir");
-    glUniform4f(ligthDirLoc, ligthDir.x, ligthDir.y, ligthDir.z, 1.0f);
+    int lightDirLoc = glGetUniformLocation(shader->uId, "lightDir");
+    glUniform4f(lightDirLoc, lightDir.x, lightDir.y, lightDir.z, 1.0f);
 
     // LIGTH COLOR UNIFORM
     int ligthColLoc = glGetUniformLocation(shader->uId, "ligthCol");

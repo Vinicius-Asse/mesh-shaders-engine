@@ -11,7 +11,7 @@
  
 int main(int argc, char** argv) {
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) finishError("Nao foi possivel inicializar o SDL");
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) finishError("Nao foi possível inicializar o SDL");
 
     setupWindow("Marching Cubes");
 
@@ -68,7 +68,7 @@ void setupWindow(const char *title){
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, 0);
 
-    printf("Versao OPENGL: %s\n", glGetString(GL_VERSION));
+    printf("Versao OpenGL: %s\n", glGetString(GL_VERSION));
 
     SDL_GL_SetSwapInterval(0);
 }
@@ -126,7 +126,7 @@ void mainLoop(ImGuiIO& io) {
 
         bool changedMesh = false;
 
-        // Ignoring Inputs if mouse is hovering an IMGUI Element
+        // Ignoring Inputs if mouse is hovering an ImGUI Element
         ImGui_ImplSDL2_ProcessEvent(&e);
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -139,32 +139,6 @@ void mainLoop(ImGuiIO& io) {
                 case SDL_QUIT:
                     running = false;
                     break;
-                //case SDL_WINDOWEVENT:
-                //    if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-                //        int width, height;
-                //        SDL_GetWindowSize(window, &width, &height);
-                //        glViewport(0, 0, width, height);
-                //    }
-                //    break;
-                //case SDL_KEYDOWN:
-                //    switch(e.key.keysym.sym) {
-                //        case SDLK_LEFT:  param->noiseDisplacement.x += 0.5f;         changedMesh = true; break;
-                //        case SDLK_RIGHT: param->noiseDisplacement.x -= 0.5f;         changedMesh = true; break;
-                //        case SDLK_UP:    param->noiseDisplacement.z += 0.5f;         changedMesh = true; break;
-                //        case SDLK_DOWN:  param->noiseDisplacement.z -= 0.5f;         changedMesh = true; break;
-                //        case SDLK_i:     param->noiseScale *= 2.0f;                  changedMesh = true; break;
-                //        case SDLK_o:     param->noiseScale *= 0.5f;                  changedMesh = true; break;
-                //        case SDLK_q:     param->surfaceLevel -= 0.1f;                changedMesh = true; break;
-                //        case SDLK_e:     param->surfaceLevel += 0.1f;                changedMesh = true; break;
-                //        case SDLK_t:     param->surfaceResolution += 8.0f;           changedMesh = true; break;
-                //        case SDLK_y:     param->surfaceResolution -= 8.0f;           changedMesh = true; break;
-                //        case SDLK_z:     param->smoothIntersect += 0.25f;            changedMesh = true; break;
-                //        case SDLK_x:     param->smoothIntersect -= 0.25f;            changedMesh = true; break;
-                //        case SDLK_k:     param->smooth       = !param->smooth;       changedMesh = true; break;
-                //        case SDLK_j:     param->linearInterp = !param->linearInterp; changedMesh = true; break;
-                //        case SDLK_g:     param->useGPU       = !param->useGPU;       changedMesh = true; break;
-                //    }
-                //    break;
                 default:
                     break;
             }
@@ -342,9 +316,9 @@ void mainLoop(ImGuiIO& io) {
 
                 camera.fixedLight = fixedLight;
                 if (!fixedLight) {
-                    camera.ligthDir.x = lightDirection[0];
-                    camera.ligthDir.y = lightDirection[1];
-                    camera.ligthDir.z = lightDirection[2];
+                    camera.lightDir.x = lightDirection[0];
+                    camera.lightDir.y = lightDirection[1];
+                    camera.lightDir.z = lightDirection[2];
                 }
 
                 if (useCompute) compute.start(); else if (useCPU) program.start();
