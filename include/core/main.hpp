@@ -21,9 +21,6 @@
 // Variaveis Globais
 double TimeDeltaTime;
 
-#define LOG(msg) std::cout << msg << std::endl;
-
-
 // Classes de Abstracoes
 #include "../../src/utils.cpp"
 #include "../../src/mesh.cpp"

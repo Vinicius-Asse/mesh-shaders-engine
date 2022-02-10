@@ -107,9 +107,11 @@ void mainLoop(ImGuiIO& io) {
 
     Point* points = createPoints(param);
 
+    Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
+
     Compute compute(param, points);
 
-    MarchingCubes program(param);
+    MarchingCubes program(param, baseShader, points);
 
     Shader* ms = new Shader("resources/shaders/mesh/test.glsl", ShaderType::MESH_SHADER);
 

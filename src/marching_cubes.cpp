@@ -3,17 +3,9 @@
 /***
  * Construtor do Programa
 **/
-MarchingCubes::MarchingCubes(Parameters *_param) {
-    param = _param;
-
-    onCreate();
-}
-
-/***
- * Método Executado Quando o Programa é Criado
-**/
-void MarchingCubes::onCreate() {
-    Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
+MarchingCubes::MarchingCubes(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param) {
+    baseShader = _baseShader;
+    points = _points;
 
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -31,21 +23,7 @@ void MarchingCubes::start() {
     int countZ = param->surfaceResolution;
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
-    points = instantiatePoints(countX, countY, countZ);
-    mesh = generateMesh(countX, countY, countZ, new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER));
-
-    std::cout << "Tempo para gerar mesh: " << Utils::currentTimeInMillis() - startTime << "ms. ";
-    std::cout << 
-        "{ " << 
-                "surfaceLevel: '" << std::to_string(param->surfaceLevel)           << "', " <<
-                "smooth: '"       << std::to_string(param->smooth)                 << "', " <<
-                "linearInterp: '" << std::to_string(param->linearInterp)           << "', " <<
-                // "distX:  '"       << std::to_string(param->noiseDisplacement.x)    << "', " <<
-                // "distY: '"        << std::to_string(param->noiseDisplacement.y)    << "', " <<
-                // "distZ: '"        << std::to_string(param->noiseDisplacement.z)    << "', " <<
-                "GPU: '"          << std::to_string(param->useGPU)                 <<
-        " }" << 
-        std::endl;
+    mesh = generateMesh(countX, countY, countZ, baseShader);
 }
 
 /***
@@ -85,46 +63,21 @@ void MarchingCubes::draw() {
  * 
 **/
 
-Point*** MarchingCubes::instantiatePoints(int countX, int countY, int countZ) {
-    Point*** points = (Point***) malloc(sizeof(Point**) * countX);
-    for (int i = 0; i < countX; i++) {
-        points[i] = (Point**) malloc(sizeof(Point*) * countY);
-        for (int j = 0; j < countY; j++) {
-            points[i][j] = (Point*) malloc(sizeof(Point) * countZ);
-            for (int k = 0; k < countZ; k++) {
-                float x = Utils::remap(i, 0, countX - 1, -5.0f, 5.0f);
-                float y = Utils::remap(j, 0, countY - 1, -5.0f, 5.0f);
-                float z = Utils::remap(k, 0, countZ - 1, -5.0f, 5.0f);
-                points[i][j][k] = {
-                    x, y, z,
-                    Utils::generateNoise(x, y, z, param->noiseScale, param->noiseDisplacement)
-                };
-            }
-        }
-    }
-
-    return points;
-}
-
 Mesh* MarchingCubes::generateMesh(int countX, int countY, int countZ, Shader* shader) {
-
-    std::cout << "Gerando Mesh em CPU" << std::endl;
-    std::cout << "Comecou a gerar a Mesh. X = " << countX << " Y = " << countY << " Z = " << countZ << std::endl;
-
     std::vector<Triangle> triangles;
     
     for (int i = 0; i < countX - 1; i++) {
         for (int j = 0; j < countY - 1; j++) {
             for (int k = 0; k < countZ - 1; k++) {
                 Point corners[8] = {
-                    points[i  ][j  ][k  ],
-                    points[i+1][j  ][k  ],
-                    points[i+1][j  ][k+1],
-                    points[i  ][j  ][k+1],
-                    points[i  ][j+1][k  ],
-                    points[i+1][j+1][k  ],
-                    points[i+1][j+1][k+1],
-                    points[i  ][j+1][k+1] 
+                    getPoint(i  , j  , k  ),
+                    getPoint(i+1, j  , k  ),
+                    getPoint(i+1, j  , k+1),
+                    getPoint(i  , j  , k+1),
+                    getPoint(i  , j+1, k  ),
+                    getPoint(i+1, j+1, k  ),
+                    getPoint(i+1, j+1, k+1),
+                    getPoint(i  , j+1, k+1) 
                 };
 
                 int cubeIndex = 0;
@@ -159,10 +112,10 @@ Mesh* MarchingCubes::generateMesh(int countX, int countY, int countZ, Shader* sh
                     glm::vec3 normal = Utils::getNormalVector(vec0, vec1, vec2);
 
                     triangles.push_back({
-                        {vec0.x, vec0.y, vec0.z, 1.0f}, 
-                        {vec1.x, vec1.y, vec1.z, 1.0f},
-                        {vec2.x, vec2.y, vec2.z, 1.0f},
-                        {normal.x, normal.y, normal.z, 1.0f},
+                        { vec0.x, vec0.y, vec0.z, 1.0f }, 
+                        { vec1.x, vec1.y, vec1.z, 1.0f },
+                        { vec2.x, vec2.y, vec2.z, 1.0f },
+                        { normal.x, normal.y, normal.z, 1.0f },
                     });
                 }
             }
@@ -175,9 +128,31 @@ Mesh* MarchingCubes::generateMesh(int countX, int countY, int countZ, Shader* sh
         flatShading(triangles);
     }
 
-    std::cout << "Terminou de Gerar Mesh. Triangulos: " << triangles.size() << " Vertices: " << vertexBuff.size() << "  Indices: " << indicesBuff.size() << std::endl;
-
     return new Mesh(indicesBuff, vertexBuff, shader);
+}
+
+Point MarchingCubes::getPoint(int _x, int _y, int _z) {
+    int countX = param->surfaceResolution;
+    int countY = param->surfaceResolution;
+    int countZ = param->surfaceResolution;
+
+    int pointsCount = param->pointsCount; 
+
+    float x = Utils::remap(_x, 0, countX - 1, -param->worldBounds.x/2.0f, param->worldBounds.x/2.0f);
+    float y = Utils::remap(_y, 0, countY - 1, -param->worldBounds.y/2.0f, param->worldBounds.y/2.0f);
+    float z = Utils::remap(_z, 0, countZ - 1, -param->worldBounds.z/2.0f, param->worldBounds.z/2.0f);
+
+    float value = 2.5;
+    for (int i = 0; i < pointsCount; i++) {
+        float distanteToPoint = glm::distance(glm::vec3(x, y, z), glm::vec3(points[i].x, points[i].y, points[i].z));
+        value = Utils::smoothMin(Utils::remap(abs(distanteToPoint), 0, 5.5, -1, 1), value, param->smoothIntersect);
+    }
+
+    return {
+        x, y, z,         //Posição
+        value,           //Valor
+        0.0f, 0.0f, 0.0f //Velocidade (Nao utilizado)
+    };
 }
 
 glm::vec3 MarchingCubes::interpolate(Point a, Point b) {

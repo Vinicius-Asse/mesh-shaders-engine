@@ -4,6 +4,8 @@
 #include<glm/vec3.hpp>
 #include<glm/gtc/noise.hpp>
 
+#define LOG(msg) std::cout << msg << std::endl;
+
 #include<core/mesh.hpp>
 #include<core/marching_cubes.hpp>
 
@@ -16,5 +18,7 @@ public:
     static float generateNoise(float, float, float, float, glm::vec3);
     static float randomFloat(float, float);
     static std::string readFile(std::string&);
+    static int getLineId(int x, int y, int z, int max_x, int max_y, int max_z);
+    static float smoothMin(float a, float b, float k);
 };
 

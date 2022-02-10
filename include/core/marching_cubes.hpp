@@ -4,6 +4,7 @@
 #include<glm/glm.hpp>
 #include<unordered_map>
 
+#include<core/program.hpp>
 #include<core/utils.hpp>
 #include<core/camera.hpp>
 #include<core/mesh.hpp>
@@ -13,38 +14,21 @@
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
 
-struct Point {
-    float x, y, z, value;
-    float vx, vy, vz;
-};
-
-struct Vec4
-{
-    float x, y, z, w;
-};
-
-struct Triangle {
-    Vec4 ver0, ver1, ver2;
-    Vec4 normal;
-};
-
-class MarchingCubes
+class MarchingCubes : public Program
 {
 private:
     std::vector<Vertex> vertexBuff;
     std::vector<GLint> indicesBuff;
 
-    Point*** points;
+    Point* points;
     Mesh* mesh;
 
     Cube* wiredCube;
 
-    Parameters *param;
-
     void onCreate();
 
 public:
-    MarchingCubes(Parameters*);
+    MarchingCubes(Parameters*, Shader*, Point*);
 
     void start();
     void input(SDL_Event*);
@@ -52,10 +36,10 @@ public:
     void draw();
 
 private:
-    Point*** instantiatePoints(int, int, int);
-    Point*** instantiatePointsGPU(int, int, int);
+    Shader* baseShader;
+
+    Point getPoint(int x, int y, int z);
     Mesh* generateMesh(int, int, int, Shader*);
-    Mesh* generateMeshGPU(int, int, int, Shader*);
     glm::vec3 interpolate(Point, Point);
     void smoothShading(std::vector<Triangle> triangles);
     void flatShading(std::vector<Triangle> triangles);
