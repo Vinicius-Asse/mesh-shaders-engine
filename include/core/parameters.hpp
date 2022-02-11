@@ -17,6 +17,8 @@ public:
     float surfaceLevel;
     float surfaceResolution;
     float smoothIntersect;
+    float simulationSpeed;
+    float gravityForce;
     bool  smooth;
     bool  linearInterp;
     bool  useGPU;

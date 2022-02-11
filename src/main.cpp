@@ -2,12 +2,13 @@
 
     SDL_Window      *window;
     SDL_GLContext    context;
-    bool             running;
     const char*      title;
+    bool             running       = true;
 
     int              SCREEN_WIDTH  = 1280; 
     int              SCREEN_HEIGHT = 600;
     int              framerate;
+    int              MAX_FPS       = 1000;
  
 int main(int argc, char** argv) {
 
@@ -105,35 +106,22 @@ void mainLoop(ImGuiIO& io) {
         60.0f, window
     );
 
+    Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
+    Shader* meshShader = new Shader("resources/shaders/mesh/test.glsl", ShaderType::MESH_SHADER);
+
     Point* points = createPoints(param);
 
-    Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
-
     Compute compute(param, points);
-
     MarchingCubes program(param, baseShader, points);
 
-    Shader* ms = new Shader("resources/shaders/mesh/test.glsl", ShaderType::MESH_SHADER);
-
     if (useCompute) compute.start(); else if (useCPU) program.start();
-
-    running = true;
 
     //GAME LOOP
     while(running) {
         Uint32 startFrame = SDL_GetTicks();
 
-        // Framerate Control 
-        TimeDeltaTime = timeControl();
-
-        bool changedMesh = false;
-
-        // Ignoring Inputs if mouse is hovering an ImGUI Element
-        ImGui_ImplSDL2_ProcessEvent(&e);
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
-        ImGui::NewFrame();
+        // Inicializa frame ImGui
+        setupImGuiFrame(io, e);
 
         // INPUT HANDLER
         while(SDL_PollEvent(&e) != 0){
@@ -145,39 +133,40 @@ void mainLoop(ImGuiIO& io) {
                     break;
             }
 
+            // Captura eventos para movimentação da camera pelo mundo
             if (!io.WantCaptureMouse) {
                 camera.handleInputs(e);
             }
-
         }
-    
-        if (changedMesh) 
-            if (useCompute) compute.generateMesh(); else if (useCPU) program.start();
 
         // UPDATE
         {
+            // Atualiza a localização dos Pontos 
             updatePoints(points, param);
+
+            // Atualiza a movimentação da camera no mundo
             camera.update();
+
+            // Atualiza a geometria
             if (useCompute) compute.update(); else if (useCPU) program.update();
         }
 
         // DRAW
         {
             //BEGIN DRAW: Clear Screen
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClearDepth(1.0);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            clearScreen(0.0f, 0.0f, 0.0f, 0.0f);
 
             if (useMeshShader) {
-                ms->enable();
+                //TODO: Criar programa para execução de mesh shader!!!
+                meshShader->enable();
                 glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
 
                 // MVP MATRIX UNIFORM
-                int mvpLoc = glGetUniformLocation(ms->uId, "MVP");
+                int mvpLoc = glGetUniformLocation(meshShader->uId, "MVP");
                 glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 
                 glDrawMeshTasksNV(0, 1);
-                ms->disable();
+                meshShader->disable();
             } else if (useCompute) {
                 compute.draw();
             } else {
@@ -235,6 +224,12 @@ void mainLoop(ImGuiIO& io) {
 
             ImGui::Text("Intensidade do Ruído");
             remesh ^= ImGui::DragFloat("##noiseScale", &param->noiseScale, 0.0001f, 0, 1, "%.2f", 1.0f);
+
+            ImGui::Text("Força de atração");
+            remesh ^= ImGui::DragFloat("##gravityForce", &param->gravityForce, 0.001f, 0, 1, "%.2f", 1.0f);
+
+            ImGui::Text("Velocidade de simulação");
+            remesh ^= ImGui::DragFloat("##simSpeed", &param->simulationSpeed, 0.001f, 0, 2.5, "%.2f", 1.0f);
 
             ImGui::End();
 
@@ -339,6 +334,9 @@ void mainLoop(ImGuiIO& io) {
             //END DRAW: Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);
         }
+    
+        // Framerate Control 
+        TimeDeltaTime = timeControl(&startFrame);
     }
 }
 
@@ -358,8 +356,8 @@ Point* createPoints(Parameters *param) {
         glm::vec3 position = glm::ballRand(param->worldBounds.x / 2);
         points[i] = {
             position.x, position.y, position.z, // Position
-            0.0f,             // Value (não utilizado)
-            0.0f, 0.0f, 0.0f, // Velocity
+            0.0f,                               // Value (não utilizado)
+            0.0f, 0.0f, 0.0f,                   // Velocity
         };
     }
 
@@ -370,19 +368,27 @@ void updatePoints(Point* points, Parameters* param) {
     for (int i = 0; i < param->pointsCount; i++) {
         Point p = points[i];
 
+        glm::vec3 velocity = glm::vec3(p.vx, p.vy, p.vz);
         glm::vec3 position = glm::vec3(p.x, p.y, p.z);
-        glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
 
-        float dist = glm::distance2(position, origin);
+        float dist = glm::length2(position);
 
-        glm::vec3 newVelocity = glm::vec3(p.vx, p.vy, p.vz) + glm::normalize(position) * glm::min(dist, 0.01f);
-        glm::vec3 newPosition = position - newVelocity * (float)TimeDeltaTime;
+        glm::vec3 newVelocity = velocity + glm::normalize(position) * glm::min(dist, 0.01f);
+        glm::vec3 newPosition = position - newVelocity * (float)TimeDeltaTime * param->simulationSpeed;
 
-        float noise = Utils::generateNoise(newVelocity.x, newVelocity.y, newVelocity.z, 1.0f);
+        // Colisão com as bordas
+        if (newPosition.x >  param->worldBounds.x / 2) newPosition.x =  param->worldBounds.x / 2;
+        if (newPosition.x < -param->worldBounds.x / 2) newPosition.x = -param->worldBounds.x / 2;
 
-        p.x = newPosition.x + (noise * param->noiseScale);
-        p.y = newPosition.y + (noise * param->noiseScale);
-        p.z = newPosition.z + (noise * param->noiseScale);
+        if (newPosition.y >  param->worldBounds.y / 2) newPosition.y =  param->worldBounds.y / 2;
+        if (newPosition.y < -param->worldBounds.y / 2) newPosition.y = -param->worldBounds.y / 2;
+
+        if (newPosition.z >  param->worldBounds.z / 2) newPosition.z =  param->worldBounds.z / 2;
+        if (newPosition.z < -param->worldBounds.z / 2) newPosition.z = -param->worldBounds.z / 2;
+
+        p.x = newPosition.x;
+        p.y = newPosition.y;
+        p.z = newPosition.z;
 
         p.vx = newVelocity.x;
         p.vy = newVelocity.y;
@@ -399,40 +405,28 @@ void finishError(std::string err_msg) {
     SDL_Quit();
 }
 
-double timeControl(){
+double timeControl(Uint32* startFrame){
 	static int frames = 0;
-	static unsigned int terminoFrame = 0, inicioFrame = 0, timerFrame = 0;
+	static Uint32 now = 0, timerFrame = 0;
 	
 	frames ++;
-	inicioFrame = SDL_GetTicks();
-	double deltaTime = (double)(inicioFrame - terminoFrame) / 100;
+	now = SDL_GetTicks();
+	double deltaTime = (double)(now - *startFrame) / 1000;
 	
-	if (SDL_TICKS_PASSED(inicioFrame, timerFrame + 1000)){
+	if (SDL_TICKS_PASSED(*startFrame, timerFrame + 1000)){
         std::string title = "Matching Cubes (" + std::to_string(frames) + " FPS)";
         framerate = frames;
         SDL_SetWindowTitle(window, title.c_str());
 
 		frames = 0;
-		timerFrame = inicioFrame;
+		timerFrame = *startFrame;
 	}
-	
-	terminoFrame = inicioFrame;
-	
-	if (deltaTime < 1) {
-		SDL_Delay(1 - deltaTime);
+
+	if (deltaTime < 1000/MAX_FPS) {
+		SDL_Delay(1000/MAX_FPS - deltaTime);
 	}
 
     return deltaTime;
-}
-
-int getFramerate(Uint32 startFrame){
-	int result = 0;
-    Uint32 msec = SDL_GetTicks() - startFrame;
-
-    if (msec > 0)
-        result = 1000.0 / (double) msec;
-
-    return result;
 }
 
 void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam )
@@ -444,6 +438,19 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
     }
 }
 
-bool supportsMeshShaders() {
-    return false;
+void setupImGuiFrame(ImGuiIO& io, SDL_Event e) {
+    LOG("Inicializando frame ImGui");
+
+    // Ignoring Inputs if mouse is hovering an ImGUI Element
+    ImGui_ImplSDL2_ProcessEvent(&e);
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui::NewFrame();
+}
+
+void clearScreen(float r, float g, float b, float a) {
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearDepth(1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }

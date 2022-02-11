@@ -47,9 +47,8 @@ void finishError(std::string);
 void mainLoop(ImGuiIO&);
 void updatePoints(Point*, Parameters*);
 Point* createPoints(Parameters*);
-double timeControl();
-int getFramerate(Uint32);
-bool supportMeshShaders();
+double timeControl(Uint32*);
+void setupImGuiFrame(ImGuiIO& io, SDL_Event e);
 
 void GLAPIENTRY MessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
 

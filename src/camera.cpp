@@ -5,7 +5,7 @@ Camera* Camera::MainCamera = nullptr;
 Camera::Camera(glm::vec3 _position, float _fov, SDL_Window *_window) {
     position = _position;
     fov = _fov;
-    moveSpeed = 1.0f;
+    moveSpeed = 10.0f;
     window = _window;
     fixedLight = false;
 
@@ -77,7 +77,7 @@ void Camera::handleInputs(SDL_Event e) {
 
 void Camera::update() {
     if (mouseEnabled) {
-        float mouseSense = 350.0f; //TODO: Parametrizar sensibilidade
+        float mouseSense = 3500.0f; //TODO: Parametrizar sensibilidade
 
         //TODO: Organizar movimentacao da camera
         int mouseX, mouseY;

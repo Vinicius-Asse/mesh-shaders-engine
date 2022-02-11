@@ -10,6 +10,8 @@ Parameters::Parameters()
     surfaceResolution   = 16.0f;
     smoothIntersect     = 2.0f;
     pointsCount         = 10;
+    simulationSpeed     = 1.0f;
+    gravityForce        = .01f;
     smooth              = false;
     linearInterp        = false;
     useGPU              = true;
