@@ -3,10 +3,8 @@
 /***
  * Construtor do Programa
 **/
-MarchingCubes::MarchingCubes(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param) {
-    baseShader = _baseShader;
-    points = _points;
-
+MarchingCubes::MarchingCubes(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) {
+    LOG("Começando Marching Cubes CPU");
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(10.0f, 10.0f, 10.0f),
@@ -17,14 +15,7 @@ MarchingCubes::MarchingCubes(Parameters *_param, Shader* _baseShader, Point* _po
 /***
  * Método Executado Quando o Programa é Iniciado
 **/
-void MarchingCubes::start() {
-    int countX = param->surfaceResolution;
-    int countY = param->surfaceResolution;
-    int countZ = param->surfaceResolution;
-
-    unsigned __int64 startTime = Utils::currentTimeInMillis();
-    mesh = generateMesh(countX, countY, countZ, baseShader);
-}
+void MarchingCubes::start() { TRACE("Chamada ao metodo Start"); }
 
 /***
  * Método Executado no Inicio de Cada Frame
@@ -34,7 +25,17 @@ void MarchingCubes::input(SDL_Event* e) { }
 /***
  * Método Executado Toda Frame
 **/
-void MarchingCubes::update() { }
+void MarchingCubes::update() {
+
+    qX = param->surfaceResolution;
+    qY = param->surfaceResolution;
+    qZ = param->surfaceResolution;
+
+    unsigned __int64 startTime = Utils::currentTimeInMillis();
+    mesh = generateMesh(baseShader);
+
+    meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);
+}
 
 /***
  * Método Executado ao Fim de Toda Frame
@@ -63,12 +64,12 @@ void MarchingCubes::draw() {
  * 
 **/
 
-Mesh* MarchingCubes::generateMesh(int countX, int countY, int countZ, Shader* shader) {
+Mesh* MarchingCubes::generateMesh(Shader* shader) {
     std::vector<Triangle> triangles;
     
-    for (int i = 0; i < countX - 1; i++) {
-        for (int j = 0; j < countY - 1; j++) {
-            for (int k = 0; k < countZ - 1; k++) {
+    for (int i = 0; i < qX - 1; i++) {
+        for (int j = 0; j < qY - 1; j++) {
+            for (int k = 0; k < qZ - 1; k++) {
                 Point corners[8] = {
                     getPoint(i  , j  , k  ),
                     getPoint(i+1, j  , k  ),
@@ -128,19 +129,19 @@ Mesh* MarchingCubes::generateMesh(int countX, int countY, int countZ, Shader* sh
         flatShading(triangles);
     }
 
+    meshInfo["trizCount"] = std::to_string(triangles.size());
+    meshInfo["vertexCount"] = std::to_string(vertexBuff.size());
+    meshInfo["indicesCount"] = std::to_string(indicesBuff.size());
+
     return new Mesh(indicesBuff, vertexBuff, shader);
 }
 
 Point MarchingCubes::getPoint(int _x, int _y, int _z) {
-    int countX = param->surfaceResolution;
-    int countY = param->surfaceResolution;
-    int countZ = param->surfaceResolution;
-
     int pointsCount = param->pointsCount; 
 
-    float x = Utils::remap(_x, 0, countX - 1, -param->worldBounds.x/2.0f, param->worldBounds.x/2.0f);
-    float y = Utils::remap(_y, 0, countY - 1, -param->worldBounds.y/2.0f, param->worldBounds.y/2.0f);
-    float z = Utils::remap(_z, 0, countZ - 1, -param->worldBounds.z/2.0f, param->worldBounds.z/2.0f);
+    float x = Utils::remap(_x, 0, qX - 1, -param->worldBounds.x/2.0f, param->worldBounds.x/2.0f);
+    float y = Utils::remap(_y, 0, qY - 1, -param->worldBounds.y/2.0f, param->worldBounds.y/2.0f);
+    float z = Utils::remap(_z, 0, qZ - 1, -param->worldBounds.z/2.0f, param->worldBounds.z/2.0f);
 
     float value = 2.5;
     for (int i = 0; i < pointsCount; i++) {
@@ -168,7 +169,6 @@ glm::vec3 MarchingCubes::interpolate(Point a, Point b) {
 }
 
 void MarchingCubes::smoothShading(std::vector<Triangle> triangles) {
-
     vertexBuff.clear();
     indicesBuff.clear();
 
@@ -206,6 +206,7 @@ void MarchingCubes::flatShading(std::vector<Triangle> triangles) {
 }
 
 bool MarchingCubes::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
+    //TODO: Alterar implementação para melhor controle da implementação de geometria suave
     if (map->find(position) == map->end()) {
         map->insert(std::make_pair(position, current));
         vertexBuff.push_back(Utils::createVertex({position.x, position.y, position.z, 1.0f}, {normal.x, normal.y, normal.z, 1.0f}));

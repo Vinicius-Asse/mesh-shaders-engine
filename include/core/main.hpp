@@ -22,6 +22,8 @@
 double TimeDeltaTime;
 
 // Classes de Abstracoes
+#include "parameters.hpp"
+
 #include "../../src/utils.cpp"
 #include "../../src/mesh.cpp"
 #include "../../src/marching_cubes.cpp"
@@ -30,7 +32,6 @@ double TimeDeltaTime;
 #include "../../src/cube.cpp"
 #include "../../src/sphere.cpp"
 #include "../../src/camera.cpp"
-#include "../../src/parameters.cpp"
 
 // Bibliotecas Auxiliares
 #include <iostream>
@@ -48,8 +49,10 @@ void mainLoop(ImGuiIO&);
 void updatePoints(Point*, Parameters*);
 Point* createPoints(Parameters*);
 double timeControl(Uint32*);
+void clearScreen(float, float, float, float);
 void setupImGuiFrame(ImGuiIO& io, SDL_Event e);
-
 void GLAPIENTRY MessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
+void drawImGuiElements(Program*, ImGuiIO&, Parameters*, Camera);
+Program* getProgram(Parameters*, Program*, Program*, Program*);
 
 #endif

@@ -2,25 +2,25 @@
 
 #include<glm/vec3.hpp>
 
+enum class Implementation { CPU=0, COMPUTE_SHADER=1, MESH_SHADER=2 };
+
 class Parameters
 {
-private:
-    /* data */
-public:
-    Parameters();
-    ~Parameters();
-    
-    glm::vec3 worldBounds;
-    glm::vec3 noiseDisplacement;
-    int   pointsCount;
-    float noiseScale;
-    float surfaceLevel;
-    float surfaceResolution;
-    float smoothIntersect;
-    float simulationSpeed;
-    float gravityForce;
-    bool  smooth;
-    bool  linearInterp;
-    bool  useGPU;
-
+    public:
+        Parameters() {};
+        
+        glm::vec3 worldBounds       = glm::vec3(10.0f, 10.0f, 10.0f);
+        glm::vec3 lightDirection    = glm::vec3(0.2f, -0.8f, -0.6f);
+        int   pointsCount           = 10;
+        float surfaceLevel          = -0.75f;
+        float surfaceResolution     = 16.0;
+        float smoothIntersect       = 2.0;
+        float simulationSpeed       = 1.0f;
+        float gravityForce          = 0.1f;
+        bool  smooth                = false;
+        bool  linearInterp          = false;
+        bool  fullscreen            = false;
+        bool  fixedLight            = false;
+        bool  lockAspectRatio       = true;
+        Implementation  impl        = Implementation::CPU;
 };

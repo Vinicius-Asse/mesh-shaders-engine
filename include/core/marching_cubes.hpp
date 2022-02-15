@@ -20,7 +20,8 @@ private:
     std::vector<Vertex> vertexBuff;
     std::vector<GLint> indicesBuff;
 
-    Point* points;
+    int qX, qY, qZ;
+
     Mesh* mesh;
 
     Cube* wiredCube;
@@ -36,10 +37,9 @@ public:
     void draw();
 
 private:
-    Shader* baseShader;
 
     Point getPoint(int x, int y, int z);
-    Mesh* generateMesh(int, int, int, Shader*);
+    Mesh* generateMesh(Shader*);
     glm::vec3 interpolate(Point, Point);
     void smoothShading(std::vector<Triangle> triangles);
     void flatShading(std::vector<Triangle> triangles);

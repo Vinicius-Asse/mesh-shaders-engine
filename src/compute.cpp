@@ -23,6 +23,7 @@ void Compute::onCreate() {
  * Método Executado Quando o Programa é Iniciado
 **/
 void Compute::start() {
+    LOG("Start Compute Shader");
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
         param->worldBounds,

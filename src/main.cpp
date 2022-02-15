@@ -79,28 +79,6 @@ void mainLoop(ImGuiIO& io) {
 
     Parameters *param = new Parameters();
 
-    bool useCompute         = true;
-    bool useCPU             = false;
-    bool useMeshShader      = false;
-    bool fullscreen         = false;
-    bool fixedLight         = false;
-    bool lockAspectRatio    = true;
-    bool supportMeshShaders = SDL_GL_ExtensionSupported("GL_NV_mesh_shader");
-
-    GLint maxDrawMeshShaderTaskQnt = 0;
-    GLint maxMeshShaderOutputVertices = 0;
-    GLint maxMeshShaderOutputPrimitives = 0;
-    if (supportMeshShaders) {
-        glGetIntegerv(GL_MAX_DRAW_MESH_TASKS_COUNT_NV, &maxDrawMeshShaderTaskQnt);
-        glGetIntegerv(GL_MAX_MESH_OUTPUT_VERTICES_NV, &maxMeshShaderOutputVertices);
-        glGetIntegerv(GL_MAX_MESH_OUTPUT_PRIMITIVES_NV, &maxMeshShaderOutputPrimitives);
-    }
-
-    int resolutionMultiplier = param->surfaceResolution / 8.0f;
-
-    float lightDirection[3] = { 0.2f, -0.8f, -0.6f };
-    float worldBounds[3] = { param->worldBounds.x, param->worldBounds.y, param->worldBounds.z };
-
     Camera camera = Camera(
         glm::vec3(0.0f, 0.0f, 20.0f),
         60.0f, window
@@ -111,10 +89,13 @@ void mainLoop(ImGuiIO& io) {
 
     Point* points = createPoints(param);
 
-    Compute compute(param, points);
-    MarchingCubes program(param, baseShader, points);
+    MarchingCubes* cpuProgram = new MarchingCubes(param, baseShader, points);
+    //Program* computeProgram = new ComputeMarchingCubes(param, baseShader, points);
+    //Program* meshShaderProgram = new MeshMarchingCubes(param, baseShader, points);
 
-    if (useCompute) compute.start(); else if (useCPU) program.start();
+    Program* program = getProgram(param, cpuProgram, cpuProgram, cpuProgram);
+
+    program->start();
 
     //GAME LOOP
     while(running) {
@@ -148,7 +129,7 @@ void mainLoop(ImGuiIO& io) {
             camera.update();
 
             // Atualiza a geometria
-            if (useCompute) compute.update(); else if (useCPU) program.update();
+            program->update();
         }
 
         // DRAW
@@ -156,180 +137,33 @@ void mainLoop(ImGuiIO& io) {
             //BEGIN DRAW: Clear Screen
             clearScreen(0.0f, 0.0f, 0.0f, 0.0f);
 
-            if (useMeshShader) {
-                //TODO: Criar programa para execução de mesh shader!!!
-                meshShader->enable();
-                glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
+            program->draw();
 
-                // MVP MATRIX UNIFORM
-                int mvpLoc = glGetUniformLocation(meshShader->uId, "MVP");
-                glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+            // if (useMeshShader) {
+            //     //TODO: Criar programa para execução de mesh shader!!!
+            //     meshShader->enable();
+            //     glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
 
-                glDrawMeshTasksNV(0, 1);
-                meshShader->disable();
-            } else if (useCompute) {
-                compute.draw();
-            } else {
-                program.draw();
+            //     // MVP MATRIX UNIFORM
+            //     int mvpLoc = glGetUniformLocation(meshShader->uId, "MVP");
+            //     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+
+            //     glDrawMeshTasksNV(0, 1);
+            //     meshShader->disable();
+            // } else if (useCompute) {
+            //     compute.draw();
+            // } else {
+            //     program.draw();
+            // }
+
+            Implementation currImpl = param->impl;
+
+            drawImGuiElements(program, io, param, camera);
+
+            // Imprime a troca na implementação do programa
+            if (currImpl != param->impl) {
+                program = getProgram(param, cpuProgram, cpuProgram, cpuProgram);
             }
-
-            ImGui::Begin("Informações");
-
-            std::string supportsMeshShadersStr = supportMeshShaders ? "Suporte à Mesh Shaders      : SIM" : "Suporte à Mesh Shaders   : NÃO";
-            ImGui::Text(supportsMeshShadersStr.c_str());
-
-            if (supportMeshShaders) {
-                std::string maxDrawMeshShaderTaskQntStr =    
-                    "Qnt. Max. Task Draw         : " + std::to_string(maxDrawMeshShaderTaskQnt); 
-
-                std::string maxMeshShaderOutputVerticesStr = 
-                    "Qnt. Max. Output Vertices   : " + std::to_string(maxMeshShaderOutputVertices);
-
-                std::string maxMeshShaderOutputPrimitivesStr = 
-                    "Qnt. Max. Output Primitivos : " + std::to_string(maxMeshShaderOutputPrimitives); 
-
-                ImGui::Text(maxDrawMeshShaderTaskQntStr.c_str());
-                ImGui::Text(maxMeshShaderOutputVerticesStr.c_str());
-                ImGui::Text(maxMeshShaderOutputPrimitivesStr.c_str());
-            }
-
-            ImGui::Separator();
-
-            std::string framerateStr        = "Quadros por Segundo      : " + std::to_string(framerate);
-            std::string trizCount           = "Quantidade de Triangulos : " + compute.meshInfo["trizCount"];
-            std::string vertexCount         = "Quantidade de Vertices   : " + compute.meshInfo["vertexCount"];
-            std::string indexCount          = "Quantidade de Indices    : " + compute.meshInfo["indexCount"];
-            std::string totalTimeGenMesh    = "Tempo de Geração (ms)    : " + compute.meshInfo["timeGeneratingMesh"];
-
-
-            ImGui::Text(framerateStr.c_str());
-            ImGui::Text(trizCount.c_str());
-            ImGui::Text(vertexCount.c_str());
-            ImGui::Text(indexCount.c_str());
-            ImGui::Text(totalTimeGenMesh.c_str());
-
-            ImGui::End();
-
-            bool remesh = true;
-
-            ImGui::Begin("Meta Balls");
-
-            if (ImGui::Button("Reiniciar Esferas")) {
-                points = createPoints(param);
-                remesh = true;
-            }
-
-            ImGui::Text("Quantidade de Esferas");
-            remesh ^= ImGui::SliderInt("##pointsCount", &param->pointsCount, 0, 10);
-
-            ImGui::Text("Intensidade do Ruído");
-            remesh ^= ImGui::DragFloat("##noiseScale", &param->noiseScale, 0.0001f, 0, 1, "%.2f", 1.0f);
-
-            ImGui::Text("Força de atração");
-            remesh ^= ImGui::DragFloat("##gravityForce", &param->gravityForce, 0.001f, 0, 1, "%.2f", 1.0f);
-
-            ImGui::Text("Velocidade de simulação");
-            remesh ^= ImGui::DragFloat("##simSpeed", &param->simulationSpeed, 0.001f, 0, 2.5, "%.2f", 1.0f);
-
-            ImGui::End();
-
-            ImGui::Begin("Configurações");
-
-            ImGui::Text("Implementação");
-            if (ImGui::Checkbox("CPU", &useCPU)) {
-                useCPU = true;
-                useCompute = false;
-                useMeshShader = false;
-            }
-            if (ImGui::Checkbox("Compute Shader", &useCompute)) {
-                useCPU = false;
-                useCompute = true;
-                useMeshShader = false;
-            }
-
-            ImGui::BeginDisabled(!supportMeshShaders);
-            if (ImGui::Checkbox("Mesh Shader", &useMeshShader)) {
-                useCPU = false;
-                useCompute = false;
-                useMeshShader = true;
-            }
-            ImGui::EndDisabled();
-
-            ImGui::Separator();
-
-            if (ImGui::CollapsingHeader("Tela")) {
-                ImGui::Checkbox("Tela cheia", &fullscreen);
-            }
-
-            ImGui::Separator();
-
-            if (ImGui::CollapsingHeader("Mundo")) {
-                remesh ^= ImGui::Checkbox("Iluminação fixa", &fixedLight);
-                
-                if (fixedLight) {
-                    ImGui::Text("Direção da iluminação");
-                    remesh ^= ImGui::SliderFloat3("##Direção da iluminação", lightDirection, -90, 90, "%.3f", 1.0f);
-                }
-
-                ImGui::Text("Bordas da Simulacao");
-                remesh ^= ImGui::DragFloat3("##WorldBounds", worldBounds, .01f, 0.0f, 100.0f, "%.3f", 1.0f);
-
-                ImGui::SameLine();
-                remesh ^= ImGui::Checkbox("1:1:1", &lockAspectRatio);
-            }
-
-            ImGui::Separator();
-
-            if (ImGui::CollapsingHeader("Geometria")) {
-                remesh ^= ImGui::Checkbox("Suavizar Malha", &param->smooth);
-                remesh ^= ImGui::Checkbox("Interpolação Linear", &param->linearInterp);
-
-                ImGui::Text("Intencidade da Interpolação");
-                remesh ^= ImGui::DragFloat("##Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f");
-
-                ImGui::Text("Resolução da Malha");
-                remesh ^= ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "%d");
-
-                ImGui::Text("Nivel da Superficie");
-                remesh ^= ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "%.3f");
-            }
-
-            ImGui::End();
-
-            if (remesh) {
-                if (lockAspectRatio) {
-                    if (param->worldBounds.x != worldBounds[0])
-                        worldBounds[2] = worldBounds[1] = worldBounds[0];
-                    else if (param->worldBounds.y != worldBounds[1])
-                        worldBounds[2] = worldBounds[0] = worldBounds[1];
-                    else
-                        worldBounds[0] = worldBounds[1] = worldBounds[2];
-                }
-                
-                param->surfaceResolution = 8 * resolutionMultiplier;
-                param->worldBounds.x = worldBounds[0];
-                param->worldBounds.y = worldBounds[1];
-                param->worldBounds.z = worldBounds[2];
-
-                camera.fixedLight = fixedLight;
-                if (!fixedLight) {
-                    camera.lightDir.x = lightDirection[0];
-                    camera.lightDir.y = lightDirection[1];
-                    camera.lightDir.z = lightDirection[2];
-                }
-
-                if (useCompute) compute.start(); else if (useCPU) program.start();
-            }
-
-            if (fullscreen) {
-                SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-            } 
-            else {
-                SDL_SetWindowFullscreen(window, 0);
-            }
-
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             //END DRAW: Swap Front Buffer and Back Buffer
             SDL_GL_SwapWindow(window);
@@ -338,6 +172,13 @@ void mainLoop(ImGuiIO& io) {
         // Framerate Control 
         TimeDeltaTime = timeControl(&startFrame);
     }
+
+    delete cpuProgram;
+    //delete computeProgram;
+    //delete meshProgram;
+    delete param;
+
+    free(points);
 }
 
 Point* createPoints(Parameters *param) {
@@ -360,6 +201,8 @@ Point* createPoints(Parameters *param) {
             0.0f, 0.0f, 0.0f,                   // Velocity
         };
     }
+
+    LOG("Quantidade de esferas: " << (sizeof(Point)/sizeof(points)));
 
     return points;
 }
@@ -439,8 +282,6 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
 }
 
 void setupImGuiFrame(ImGuiIO& io, SDL_Event e) {
-    LOG("Inicializando frame ImGui");
-
     // Ignoring Inputs if mouse is hovering an ImGUI Element
     ImGui_ImplSDL2_ProcessEvent(&e);
 
@@ -453,4 +294,186 @@ void clearScreen(float r, float g, float b, float a) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClearDepth(1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+}
+
+void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera camera) {
+    static bool firstDraw = true;
+    static GLint maxTaskQnt, maxVertices, maxPrimitives;
+    static bool supportMeshShader = false;
+    
+    if (firstDraw) {
+        LOG("Buscando por informações do sistema... ");
+
+        supportMeshShader = SDL_GL_ExtensionSupported("GL_NV_mesh_shader");
+        if (supportMeshShader) {
+            glGetIntegerv(GL_MAX_DRAW_MESH_TASKS_COUNT_NV, &maxTaskQnt);
+            glGetIntegerv(GL_MAX_MESH_OUTPUT_VERTICES_NV, &maxVertices);
+            glGetIntegerv(GL_MAX_MESH_OUTPUT_PRIMITIVES_NV, &maxPrimitives);
+        }
+        firstDraw = false;
+    }
+
+    bool useCPU        = param->impl == Implementation::CPU;
+    bool useCompute    = param->impl == Implementation::COMPUTE_SHADER;
+    bool useMeshShader = param->impl == Implementation::MESH_SHADER;
+
+    float lightDirection[3] = { param->lightDirection.x, param->lightDirection.x, param->lightDirection.x };
+    float worldBounds[3]    = { param->worldBounds.x, param->worldBounds.y, param->worldBounds.z };
+
+    int resolutionMultiplier = param->surfaceResolution / 8.0f;
+
+    ImGui::Begin("Informações");
+    {
+        ImGui::Text ("Suporte à Mesh Shaders      :", supportMeshShader ? "SIM" : "NÃO");
+
+        if (supportMeshShader) {
+            ImGui::Text("Qnt. Max. Task Draw         : ", std::to_string(maxTaskQnt));
+            ImGui::Text("Qnt. Max. Output Vertices   : ", std::to_string(maxVertices));
+            ImGui::Text("Qnt. Max. Output Primitivos : ", std::to_string(maxPrimitives));
+        }
+
+        ImGui::Separator();
+
+        ImGui::Text("Quadros por Segundo      : ", std::to_string(framerate));
+        ImGui::Text("Quantidade de Triangulos : ", program->meshInfo["trizCount"]);
+        ImGui::Text("Quantidade de Vertices   : ", program->meshInfo["vertexCount"]);
+        ImGui::Text("Quantidade de Indices    : ", program->meshInfo["indexCount"]);
+        ImGui::Text("Tempo de Geração (ms)    : ", program->meshInfo["timeGeneratingMesh"]);
+    }
+    ImGui::End();
+
+    ImGui::Begin("Meta Balls");
+    {
+        ImGui::Text("Quantidade de Esferas");
+        ImGui::SliderInt("##pointsCount", &param->pointsCount, 0, 10);
+
+        ImGui::Text("Força de atração");
+        ImGui::DragFloat("##gravityForce", &param->gravityForce, 0.001f, 0, 1, "%.2f", 1.0f);
+
+        ImGui::Text("Velocidade de simulação");
+        ImGui::DragFloat("##simSpeed", &param->simulationSpeed, 0.001f, 0, 2.5, "%.2f", 1.0f);
+    }
+    ImGui::End();
+
+    ImGui::Begin("Configurações");
+    {
+        ImGui::Text("Implementação");
+
+        if (ImGui::Checkbox("CPU", &useCPU)) {
+            param->impl = Implementation::CPU;
+        }            
+        if (ImGui::Checkbox("Compute Shader", &useCompute)) {
+            param->impl = Implementation::COMPUTE_SHADER;
+        }
+        ImGui::BeginDisabled(!supportMeshShader);{
+            if (ImGui::Checkbox("Mesh Shader", &useMeshShader)) {
+                param->impl = Implementation::MESH_SHADER;
+            }
+        }
+        ImGui::EndDisabled();
+
+        ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("Tela")) {
+            ImGui::Checkbox("Tela cheia", &param->fullscreen);
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("Mundo")) {
+            ImGui::Checkbox("Iluminação fixa", &param->fixedLight);
+            
+            if (param->fixedLight) {
+                ImGui::Text("Direção da iluminação");
+                ImGui::SliderFloat3("##Direção da iluminação", lightDirection, -90, 90, "%.3f", 1.0f);
+            }
+
+            ImGui::Text("Bordas da Simulação");
+            ImGui::DragFloat3("##WorldBounds", worldBounds, .01f, 0.0f, 100.0f, "%.3f", 1.0f);
+
+            ImGui::SameLine();
+            ImGui::Checkbox("1:1:1", &param->lockAspectRatio);
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("Geometria")) {
+            ImGui::Checkbox("Suavizar Malha", &param->smooth);
+            ImGui::Checkbox("Interpolação Linear", &param->linearInterp);
+
+            ImGui::Text("Intensidade da Interpolação");
+            ImGui::DragFloat("##Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f");
+
+            ImGui::Text("Resolução da Malha");
+            ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "%d");
+
+            ImGui::Text("Nível da Superfície");
+            ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "%.3f");
+        }
+    }
+    ImGui::End();
+
+    if (param->lockAspectRatio) {
+        if (param->worldBounds.x != worldBounds[0]) {
+            worldBounds[2] = worldBounds[1] = worldBounds[0];
+        }
+        else if (param->worldBounds.y != worldBounds[1]) {
+            worldBounds[2] = worldBounds[0] = worldBounds[1];
+        }
+        else {
+            worldBounds[0] = worldBounds[1] = worldBounds[2];
+        }
+    }
+    
+    param->surfaceResolution = 8 * resolutionMultiplier;
+    param->worldBounds.x = worldBounds[0];
+    param->worldBounds.y = worldBounds[1];
+    param->worldBounds.z = worldBounds[2];
+
+    if (!param->fixedLight) {
+        camera.lightDir.x = lightDirection[0];
+        camera.lightDir.y = lightDirection[1];
+        camera.lightDir.z = lightDirection[2];
+    }
+
+    if (param->fullscreen) {
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+    } else {
+        SDL_SetWindowFullscreen(window, 0);
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void queryHardwareInfo(GLint* maxTaskQnt, GLint* maxVertices, GLint* maxPrimitives) {
+    glGetIntegerv(GL_MAX_DRAW_MESH_TASKS_COUNT_NV, maxTaskQnt);
+    glGetIntegerv(GL_MAX_MESH_OUTPUT_VERTICES_NV, maxVertices);
+    glGetIntegerv(GL_MAX_MESH_OUTPUT_PRIMITIVES_NV, maxPrimitives);
+}
+
+Program* getProgram(Parameters* param, Program* cpuProgram, Program* computeProgram, Program* meshProgram) {
+    Program * program;
+
+    switch (param->impl) {
+        case Implementation::CPU:
+            LOG("Implementação atual: CPU");
+            program = cpuProgram;
+            break;
+        case Implementation::COMPUTE_SHADER:
+            LOG("Implementação atual: COMPUTE_SHADER");
+            program = computeProgram;
+            break;
+        case Implementation::MESH_SHADER:
+            LOG("Implementação atual: MESH_SHADER");
+            program = meshProgram;
+            break;
+    default:
+        LOG("Implementação inválida");
+        break;
+    }
+
+    program->start();
+
+    return program;
 }

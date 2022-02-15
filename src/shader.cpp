@@ -1,13 +1,16 @@
 #include<core/shader.hpp>
 
 Shader::Shader(const std::string& shaderPath, ShaderType _type) {
+    TRACE("*Creating Shader. Type: " << ToString(_type) << ", Path: " << shaderPath);
     type = _type;
     composedShader = parseShader(shaderPath);
     uId = createShader(composedShader);
+    TRACE("*Shader Created. UID: " << std::to_string(uId) << ", Type: " << ToString(_type));
 }
 
 Shader::~Shader() {
     glDeleteProgram(uId);
+    TRACE("~Shader Deleted. UID: " << std::to_string(uId) << ", Type: " << ToString(type));
 }
 
 void Shader::enable() {
@@ -116,8 +119,8 @@ unsigned int Shader::createShader(ComposedShader composedShader) {
     return program;
 }
 
-unsigned int Shader::compileShader(unsigned int type, const std::string& source) {
-    unsigned int id = glCreateShader(type);
+unsigned int Shader::compileShader(unsigned int _type, const std::string& source) {
+    unsigned int id = glCreateShader(_type);
     const char* src = source.c_str();
     glShaderSource(id, 1, &src, nullptr);
     glCompileShader(id);
@@ -129,10 +132,32 @@ unsigned int Shader::compileShader(unsigned int type, const std::string& source)
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
         char* message = (char*)alloca(sizeof(char) * length);
         glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "Vertex" : "Fragment") << " shader: " << message << std::endl;
+        std::cout << "Failed to compile " << (_type == GL_VERTEX_SHADER ? "Vertex" : "Fragment") << " shader: " << message << std::endl;
         glDeleteShader(id);
         return 0;
     }
+
+    const char* shaderType;
+    switch (_type)
+    {
+        case GL_VERTEX_SHADER:
+            shaderType = "Vertex Shader";
+            break;
+        case GL_FRAGMENT_SHADER:
+            shaderType = "Fragment Shader";
+            break;
+        case GL_COMPUTE_SHADER:
+            shaderType = "Compute Shader";
+            break;
+        case GL_MESH_SHADER_NV:
+            shaderType = "Mesh Shader";
+            break;
+    default:
+        shaderType = "Invalid Type";
+        break;
+    }
+
+    TRACE("#Success in '" << shaderType << "' compilation.");
 
     return id;
 }
@@ -161,4 +186,5 @@ void Shader::validateProgram(GLint program) {
         }
     }
 
+    TRACE("#Success in Shader validation.");
 }

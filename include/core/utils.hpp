@@ -4,7 +4,11 @@
 #include<glm/vec3.hpp>
 #include<glm/gtc/noise.hpp>
 
-#define LOG(msg) std::cout << msg << std::endl;
+#define LOG_TRACE 1
+#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+
+#define LOG(msg) std::cout << "[" << __DATE__ << "]" << "[" << __TIME__ << "][INFO]\t: " << msg << std::endl;
+#define TRACE(msg) if (LOG_TRACE) std::cout << "[" << __DATE__ << "]" << "[" << __TIME__ << "][TRACE]\t: " <<  msg << std::endl;
 
 #include<core/mesh.hpp>
 #include<core/marching_cubes.hpp>

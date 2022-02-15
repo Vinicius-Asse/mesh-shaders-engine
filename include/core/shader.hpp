@@ -17,6 +17,14 @@ struct ComposedShader
 };
 
 enum class ShaderType { NONE=-1, VERTEX_SHADER=0, COMPUTE_SHADER=1, MESH_SHADER=2 };
+inline const char* ToString(ShaderType st) {
+    switch (st) {
+        case ShaderType::VERTEX_SHADER: return "VERTEX_SHADER";
+        case ShaderType::COMPUTE_SHADER:return "COMPUTE_SHADER";
+        case ShaderType::MESH_SHADER:   return "MESH_SHADER";
+        default:      return "NONE";
+    }
+}
 
 class Shader 
 {
