@@ -3,19 +3,19 @@
 /***
  * Construtor do Programa
 **/
-MarchingCubes::MarchingCubes(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) {
-    LOG("Começando Marching Cubes CPU");
+MarchingCubes::MarchingCubes(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) { }
+
+/***
+ * Método Executado Quando o Programa é Iniciado
+**/
+void MarchingCubes::start() {
+    LOG("Start from CPU Implementation");
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(10.0f, 10.0f, 10.0f),
         baseShader
     );
 }
-
-/***
- * Método Executado Quando o Programa é Iniciado
-**/
-void MarchingCubes::start() { TRACE("Chamada ao metodo Start"); }
 
 /***
  * Método Executado no Inicio de Cada Frame

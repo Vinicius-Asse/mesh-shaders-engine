@@ -89,13 +89,11 @@ void mainLoop(ImGuiIO& io) {
 
     Point* points = createPoints(param);
 
-    MarchingCubes* cpuProgram = new MarchingCubes(param, baseShader, points);
-    //Program* computeProgram = new ComputeMarchingCubes(param, baseShader, points);
+    Program* cpuProgram = new MarchingCubes(param, baseShader, points);
+    Program* computeProgram = new MarchingCubesComputeImpl(param, baseShader, points);
     //Program* meshShaderProgram = new MeshMarchingCubes(param, baseShader, points);
 
-    Program* program = getProgram(param, cpuProgram, cpuProgram, cpuProgram);
-
-    program->start();
+    Program* program = getProgram(param, cpuProgram, computeProgram, computeProgram);
 
     //GAME LOOP
     while(running) {
@@ -162,7 +160,7 @@ void mainLoop(ImGuiIO& io) {
 
             // Imprime a troca na implementação do programa
             if (currImpl != param->impl) {
-                program = getProgram(param, cpuProgram, cpuProgram, cpuProgram);
+                program = getProgram(param, cpuProgram, computeProgram, computeProgram);
             }
 
             //END DRAW: Swap Front Buffer and Back Buffer
@@ -174,7 +172,7 @@ void mainLoop(ImGuiIO& io) {
     }
 
     delete cpuProgram;
-    //delete computeProgram;
+    delete computeProgram;
     //delete meshProgram;
     delete param;
 
@@ -453,23 +451,26 @@ void queryHardwareInfo(GLint* maxTaskQnt, GLint* maxVertices, GLint* maxPrimitiv
 }
 
 Program* getProgram(Parameters* param, Program* cpuProgram, Program* computeProgram, Program* meshProgram) {
-    Program * program;
+    Program * program = nullptr;
 
     switch (param->impl) {
-        case Implementation::CPU:
-            LOG("Implementação atual: CPU");
+        case Implementation::CPU: {
+            LOG("Implementacao atual: CPU");
             program = cpuProgram;
             break;
-        case Implementation::COMPUTE_SHADER:
-            LOG("Implementação atual: COMPUTE_SHADER");
+        }
+        case Implementation::COMPUTE_SHADER: {
+            LOG("Implementacao atual: COMPUTE_SHADER");
             program = computeProgram;
             break;
-        case Implementation::MESH_SHADER:
-            LOG("Implementação atual: MESH_SHADER");
+        }
+        case Implementation::MESH_SHADER: {
+            LOG("Implementacao atual: MESH_SHADER");
             program = meshProgram;
             break;
+        }
     default:
-        LOG("Implementação inválida");
+        LOG("Implementacao inválida");
         break;
     }
 

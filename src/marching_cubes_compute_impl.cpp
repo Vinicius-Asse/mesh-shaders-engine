@@ -3,37 +3,22 @@
 /***
  * Construtor do Programa
 **/
-MarchingCubesComputeImpl::MarchingCubesComputeImpl(Parameters *_param, Point* _points) {
-    param = _param;
-    points = _points;
+MarchingCubesComputeImpl::MarchingCubesComputeImpl(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) {
     mesh = nullptr;
-
-    onCreate();
-}
-
-/***
- * Método Executado Quando o Programa é Criado
-**/
-void MarchingCubesComputeImpl::onCreate() {
     computeShader = new Shader("resources/shaders/compute/marching.glsl", ShaderType::COMPUTE_SHADER);
-    meshShader    = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
 }
 
 /***
  * Método Executado Quando o Programa é Iniciado
 **/
 void MarchingCubesComputeImpl::start() {
-    LOG("Start Compute Shader");
+    LOG("Start from Compute Shader Implementation");
+
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
         param->worldBounds,
-        meshShader
+        baseShader
     );
-
-    unsigned __int64 startTime = Utils::currentTimeInMillis();
-    generateMesh();
-
-    meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);
 }
 
 /***
@@ -44,7 +29,16 @@ void MarchingCubesComputeImpl::input(SDL_Event* e) { }
 /***
  * Método Executado Toda Frame
 **/
-void MarchingCubesComputeImpl::update() { }
+void MarchingCubesComputeImpl::update() {
+    TRACE("Update from compute shader impl");
+
+    qX = param->surfaceResolution;
+    qY = param->surfaceResolution;
+    qZ = param->surfaceResolution;
+
+    unsigned __int64 startTime = Utils::currentTimeInMillis();
+    generateMesh();
+    meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime); }
 
 /***
  * Método Executado ao Fim de Toda Frame
@@ -74,13 +68,9 @@ void MarchingCubesComputeImpl::draw() {
 **/
 
 void MarchingCubesComputeImpl::generateMesh() {
-    int countX = param->surfaceResolution;
-    int countY = param->surfaceResolution;
-    int countZ = param->surfaceResolution;
-
     GLuint pointsCount = param->pointsCount;
 
-    const int maxTrizQnt = countX * countY * countZ;
+    const int maxTrizQnt = qX * qY * qZ;
 
     computeShader->enable();
 
@@ -160,7 +150,7 @@ void MarchingCubesComputeImpl::generateMesh() {
     }
 
     // Dispatch Compute Shader
-    glDispatchCompute(countX/8, countY/8, countZ/8);
+    glDispatchCompute(qX/8, qY/8, qZ/8);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     // Retrieving Triangles Count
@@ -198,7 +188,7 @@ void MarchingCubesComputeImpl::generateMesh() {
     
     if (mesh != nullptr) mesh->free();
     
-    mesh = new Mesh(indicesBuff, vertexBuff, meshShader);
+    mesh = new Mesh(indicesBuff, vertexBuff, baseShader);
 }
 
 void MarchingCubesComputeImpl::smoothShading(Triangle *triangles, int trizCount) {

@@ -15,26 +15,21 @@
 #include<core/constants/tables.hpp>
 
 
-class MarchingCubesComputeImpl
+class MarchingCubesComputeImpl : public Program
 {
-private:
     std::vector<Vertex> vertexBuff;
     std::vector<GLint> indicesBuff;
 
-    Point *points;
+    int qX, qY, qZ;
+
     Mesh *mesh;
 
     Cube *wiredCube;
 
-    Parameters *param;
-
     Shader *computeShader;
-    Shader *meshShader;
-
-    void onCreate();
 
 public:
-    MarchingCubesComputeImpl(Parameters*, Point*);
+    MarchingCubesComputeImpl(Parameters*, Shader*, Point*);
 
     std::map<std::string, std::string> meshInfo;
 
