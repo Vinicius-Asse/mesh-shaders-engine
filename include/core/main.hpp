@@ -27,7 +27,7 @@ double TimeDeltaTime;
 #include "../../src/utils.cpp"
 #include "../../src/mesh.cpp"
 #include "../../src/marching_cubes.cpp"
-#include "../../src/compute.cpp"
+#include "../../src/marching_cubes_compute_impl.cpp"
 #include "../../src/shader.cpp"
 #include "../../src/cube.cpp"
 #include "../../src/sphere.cpp"

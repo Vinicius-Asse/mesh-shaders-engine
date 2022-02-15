@@ -1,9 +1,9 @@
-#include<core/compute.hpp>
+#include<core/marching_cubes_compute_impl.hpp>
 
 /***
  * Construtor do Programa
 **/
-Compute::Compute(Parameters *_param, Point* _points) {
+MarchingCubesComputeImpl::MarchingCubesComputeImpl(Parameters *_param, Point* _points) {
     param = _param;
     points = _points;
     mesh = nullptr;
@@ -14,7 +14,7 @@ Compute::Compute(Parameters *_param, Point* _points) {
 /***
  * Método Executado Quando o Programa é Criado
 **/
-void Compute::onCreate() {
+void MarchingCubesComputeImpl::onCreate() {
     computeShader = new Shader("resources/shaders/compute/marching.glsl", ShaderType::COMPUTE_SHADER);
     meshShader    = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
 }
@@ -22,7 +22,7 @@ void Compute::onCreate() {
 /***
  * Método Executado Quando o Programa é Iniciado
 **/
-void Compute::start() {
+void MarchingCubesComputeImpl::start() {
     LOG("Start Compute Shader");
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -39,17 +39,17 @@ void Compute::start() {
 /***
  * Método Executado no Inicio de Cada Frame
 **/
-void Compute::input(SDL_Event* e) { }
+void MarchingCubesComputeImpl::input(SDL_Event* e) { }
 
 /***
  * Método Executado Toda Frame
 **/
-void Compute::update() { }
+void MarchingCubesComputeImpl::update() { }
 
 /***
  * Método Executado ao Fim de Toda Frame
 **/
-void Compute::draw() {
+void MarchingCubesComputeImpl::draw() {
 
     // Turn on wireframe mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -73,7 +73,7 @@ void Compute::draw() {
  * 
 **/
 
-void Compute::generateMesh() {
+void MarchingCubesComputeImpl::generateMesh() {
     int countX = param->surfaceResolution;
     int countY = param->surfaceResolution;
     int countZ = param->surfaceResolution;
@@ -201,7 +201,7 @@ void Compute::generateMesh() {
     mesh = new Mesh(indicesBuff, vertexBuff, meshShader);
 }
 
-void Compute::smoothShading(Triangle *triangles, int trizCount) {
+void MarchingCubesComputeImpl::smoothShading(Triangle *triangles, int trizCount) {
 
     vertexBuff.clear();
     indicesBuff.clear();
@@ -222,7 +222,7 @@ void Compute::smoothShading(Triangle *triangles, int trizCount) {
     }
 }
 
-void Compute::flatShading(Triangle *triangles, int trizCount) {
+void MarchingCubesComputeImpl::flatShading(Triangle *triangles, int trizCount) {
 
     vertexBuff.clear();
     indicesBuff.clear();
@@ -239,7 +239,7 @@ void Compute::flatShading(Triangle *triangles, int trizCount) {
     }
 }
 
-bool Compute::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
+bool MarchingCubesComputeImpl::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
     if (map->find(position) == map->end()) {
         map->insert(std::make_pair(position, current));
         vertexBuff.push_back(Utils::createVertex({position.x, position.y, position.z, 1.0f}, {normal.x, normal.y, normal.z, 1.0f}));

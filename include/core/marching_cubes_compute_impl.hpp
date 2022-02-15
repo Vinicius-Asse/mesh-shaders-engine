@@ -15,7 +15,7 @@
 #include<core/constants/tables.hpp>
 
 
-class Compute
+class MarchingCubesComputeImpl
 {
 private:
     std::vector<Vertex> vertexBuff;
@@ -34,7 +34,7 @@ private:
     void onCreate();
 
 public:
-    Compute(Parameters*, Point*);
+    MarchingCubesComputeImpl(Parameters*, Point*);
 
     std::map<std::string, std::string> meshInfo;
 
