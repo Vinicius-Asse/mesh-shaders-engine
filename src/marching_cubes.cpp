@@ -81,22 +81,23 @@ Mesh* MarchingCubes::generateMesh(Shader* shader) {
                     getPoint(i  , j+1, k+1) 
                 };
 
-                int cubeIndex = 0;
-                for (int l = 0; l < 8; l++)
-                {
-                    if (corners[l].value > param->surfaceLevel)
-                    {
-                        cubeIndex |= 1 << l;
-                    }
-                }
+                int index = 0;
+                if (corners[0].value < param->surfaceLevel) index |=   1;
+                if (corners[1].value < param->surfaceLevel) index |=   2;
+                if (corners[2].value < param->surfaceLevel) index |=   4;
+                if (corners[3].value < param->surfaceLevel) index |=   8;
+                if (corners[4].value < param->surfaceLevel) index |=  16;
+                if (corners[5].value < param->surfaceLevel) index |=  32;
+                if (corners[6].value < param->surfaceLevel) index |=  64;
+                if (corners[7].value < param->surfaceLevel) index |= 128;
 
-                if (cubeIndex == 0 || cubeIndex == 255) continue;
+                if (index == 0 || index == 255) continue;
 
-                for (int l = 0; triTable[cubeIndex][l] !=-1; l+=3)
+                for (int l = 0; triTable[index][l] !=-1; l+=3)
                 {
-                    int idx = triTable[cubeIndex][l + 0];
-                    int idy = triTable[cubeIndex][l + 1];
-                    int idz = triTable[cubeIndex][l + 2];
+                    int idx = triTable[index][l + 0];
+                    int idy = triTable[index][l + 1];
+                    int idz = triTable[index][l + 2];
 
                     int a0 = cornerTupleTable[idx][0];
                     int b0 = cornerTupleTable[idx][1];
@@ -137,16 +138,14 @@ Mesh* MarchingCubes::generateMesh(Shader* shader) {
 }
 
 Point MarchingCubes::getPoint(int _x, int _y, int _z) {
-    int pointsCount = param->pointsCount; 
-
-    float x = Utils::remap(_x, 0, qX - 1, -param->worldBounds.x/2.0f, param->worldBounds.x/2.0f);
-    float y = Utils::remap(_y, 0, qY - 1, -param->worldBounds.y/2.0f, param->worldBounds.y/2.0f);
-    float z = Utils::remap(_z, 0, qZ - 1, -param->worldBounds.z/2.0f, param->worldBounds.z/2.0f);
+    float x = Utils::remap(_x, 0, qX-1, -param->worldBounds.x/2.0f, param->worldBounds.x/2.0f);
+    float y = Utils::remap(_y, 0, qY-1, -param->worldBounds.y/2.0f, param->worldBounds.y/2.0f);
+    float z = Utils::remap(_z, 0, qZ-1, -param->worldBounds.z/2.0f, param->worldBounds.z/2.0f);
 
     float value = 2.5;
-    for (int i = 0; i < pointsCount; i++) {
+    for (int i = 0; i < param->pointsCount; i++) {
         float distanteToPoint = glm::distance(glm::vec3(x, y, z), glm::vec3(points[i].x, points[i].y, points[i].z));
-        value = Utils::smoothMin(Utils::remap(abs(distanteToPoint), 0, 5.5, -1, 1), value, param->smoothIntersect);
+        value = Utils::smoothMin(Utils::remap(std::abs(distanteToPoint), 0, 5.5, -1, 1), value, param->smoothIntersect);
     }
 
     return {

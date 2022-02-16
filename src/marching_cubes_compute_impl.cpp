@@ -30,8 +30,6 @@ void MarchingCubesComputeImpl::input(SDL_Event* e) { }
  * Método Executado Toda Frame
 **/
 void MarchingCubesComputeImpl::update() {
-    TRACE("Update from compute shader impl");
-
     qX = param->surfaceResolution;
     qY = param->surfaceResolution;
     qZ = param->surfaceResolution;

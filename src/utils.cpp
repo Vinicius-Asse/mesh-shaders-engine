@@ -62,7 +62,6 @@ int Utils::getLineId(int x, int y, int z, int max_x, int max_y, int max_z) {
 }
 
 float Utils::smoothMin(float a, float b, float k) {
-    float i = std::abs(a-b);
-    float h = std::max(k-i, 0.0f) / k;
-    return glm::min(a, b) - h*h*h*k*1/6.0;
+    float h = std::max(k-std::abs(a-b), 0.0f) / k;
+    return glm::min(a, b) - h*h*h*k*1/6.0f;
 }
