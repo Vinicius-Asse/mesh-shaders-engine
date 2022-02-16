@@ -91,9 +91,9 @@ void mainLoop(ImGuiIO& io) {
 
     Program* cpuProgram = new MarchingCubesCPUImpl(param, baseShader, points);
     Program* computeProgram = new MarchingCubesComputeImpl(param, baseShader, points);
-    //Program* meshShaderProgram = new MeshMarchingCubesCPUImpl(param, baseShader, points);
+    Program* meshProgram = new MarchingCubesMeshImpl(param, baseShader, points);
 
-    Program* program = getProgram(param, cpuProgram, computeProgram, computeProgram);
+    Program* program = getProgram(param, cpuProgram, computeProgram, meshProgram);
 
     //GAME LOOP
     while(running) {
@@ -137,30 +137,13 @@ void mainLoop(ImGuiIO& io) {
 
             program->draw();
 
-            // if (useMeshShader) {
-            //     //TODO: Criar programa para execução de mesh shader!!!
-            //     meshShader->enable();
-            //     glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
-
-            //     // MVP MATRIX UNIFORM
-            //     int mvpLoc = glGetUniformLocation(meshShader->uId, "MVP");
-            //     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-
-            //     glDrawMeshTasksNV(0, 1);
-            //     meshShader->disable();
-            // } else if (useCompute) {
-            //     compute.draw();
-            // } else {
-            //     program.draw();
-            // }
-
             Implementation currImpl = param->impl;
 
             drawImGuiElements(program, io, param, camera);
 
             // Imprime a troca na implementação do programa
             if (currImpl != param->impl) {
-                program = getProgram(param, cpuProgram, computeProgram, computeProgram);
+                program = getProgram(param, cpuProgram, computeProgram, meshProgram);
             }
 
             //END DRAW: Swap Front Buffer and Back Buffer
@@ -173,7 +156,7 @@ void mainLoop(ImGuiIO& io) {
 
     delete cpuProgram;
     delete computeProgram;
-    //delete meshProgram;
+    delete meshProgram;
     delete param;
 
     free(points);
