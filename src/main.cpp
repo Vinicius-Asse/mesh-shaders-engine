@@ -79,13 +79,9 @@ void mainLoop(ImGuiIO& io) {
 
     Parameters *param = new Parameters();
 
-    Camera camera = Camera(
-        glm::vec3(0.0f, 0.0f, 20.0f),
-        60.0f, window
-    );
+    Camera camera = Camera(glm::vec3(0.0f, 0.0f, 20.0f), 60.0f, window);
 
     Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
-    Shader* meshShader = new Shader("resources/shaders/mesh/test.glsl", ShaderType::MESH_SHADER);
 
     Point* points = createPoints(param);
 
