@@ -18,7 +18,7 @@ class Parameters
         float simulationSpeed       = 1.0f;
         float gravityForce          = 0.1f;
         bool  smooth                = false;
-        bool  linearInterp          = false;
+        bool  linearInterp          = true;
         bool  fullscreen            = false;
         bool  fixedLight            = false;
         bool  lockAspectRatio       = true;

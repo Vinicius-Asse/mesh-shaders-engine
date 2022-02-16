@@ -37,7 +37,7 @@ vec4 getNormalVector(Triangle t) {
 }
 
 vec4 interpolate(vec4 a, vec4 b) {
-    if (u_linear == 0) {
+    if (u_linear != 0) {
         vec3 aPos = vec3(a.x, a.y, a.z);
         vec3 bPos = vec3(b.x, b.y, b.z);
 
