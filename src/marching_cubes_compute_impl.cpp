@@ -84,7 +84,7 @@ void MarchingCubesComputeImpl::generateMesh() {
     int liLoc = glGetUniformLocation(computeShader->uId, "u_linear");
     glUniform1ui(liLoc, param->linearInterp ? 1 : 0);
 
-    // // POINTS COUNT UNIFORM
+    // POINTS COUNT UNIFORM
     int pcLoc = glGetUniformLocation(computeShader->uId, "u_pointsCount");
     glUniform1ui(pcLoc, pointsCount);
 
