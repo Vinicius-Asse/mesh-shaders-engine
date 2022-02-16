@@ -14,7 +14,7 @@
 #include<core/shader.hpp>
 #include<core/constants/tables.hpp>
 
-class MarchingCubes : public Program
+class MarchingCubesCPUImpl : public Program
 {
 private:
     std::vector<Vertex> vertexBuff;
@@ -29,7 +29,7 @@ private:
     void onCreate();
 
 public:
-    MarchingCubes(Parameters*, Shader*, Point*);
+    MarchingCubesCPUImpl(Parameters*, Shader*, Point*);
 
     void start();
     void input(SDL_Event*);

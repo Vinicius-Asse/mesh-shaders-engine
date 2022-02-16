@@ -3,12 +3,12 @@
 /***
  * Construtor do Programa
 **/
-MarchingCubes::MarchingCubes(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) { }
+MarchingCubesCPUImpl::MarchingCubesCPUImpl(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) { }
 
 /***
  * Método Executado Quando o Programa é Iniciado
 **/
-void MarchingCubes::start() {
+void MarchingCubesCPUImpl::start() {
     LOG("Start from CPU Implementation");
     wiredCube = Cube::getInstance(
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -20,12 +20,12 @@ void MarchingCubes::start() {
 /***
  * Método Executado no Inicio de Cada Frame
 **/
-void MarchingCubes::input(SDL_Event* e) { }
+void MarchingCubesCPUImpl::input(SDL_Event* e) { }
 
 /***
  * Método Executado Toda Frame
 **/
-void MarchingCubes::update() {
+void MarchingCubesCPUImpl::update() {
 
     qX = param->surfaceResolution;
     qY = param->surfaceResolution;
@@ -40,7 +40,7 @@ void MarchingCubes::update() {
 /***
  * Método Executado ao Fim de Toda Frame
 **/
-void MarchingCubes::draw() {
+void MarchingCubesCPUImpl::draw() {
 
     // Turn on wireframe mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -64,7 +64,7 @@ void MarchingCubes::draw() {
  * 
 **/
 
-Mesh* MarchingCubes::generateMesh(Shader* shader) {
+Mesh* MarchingCubesCPUImpl::generateMesh(Shader* shader) {
     std::vector<Triangle> triangles;
     
     for (int i = 0; i < qX - 1; i++) {
@@ -137,7 +137,7 @@ Mesh* MarchingCubes::generateMesh(Shader* shader) {
     return new Mesh(indicesBuff, vertexBuff, shader);
 }
 
-Point MarchingCubes::getPoint(int _x, int _y, int _z) {
+Point MarchingCubesCPUImpl::getPoint(int _x, int _y, int _z) {
     float x = Utils::remap(_x, 0, qX-1, -param->worldBounds.x/2.0f, param->worldBounds.x/2.0f);
     float y = Utils::remap(_y, 0, qY-1, -param->worldBounds.y/2.0f, param->worldBounds.y/2.0f);
     float z = Utils::remap(_z, 0, qZ-1, -param->worldBounds.z/2.0f, param->worldBounds.z/2.0f);
@@ -155,7 +155,7 @@ Point MarchingCubes::getPoint(int _x, int _y, int _z) {
     };
 }
 
-glm::vec3 MarchingCubes::interpolate(Point a, Point b) {
+glm::vec3 MarchingCubesCPUImpl::interpolate(Point a, Point b) {
     glm::vec3 aPos = glm::vec3(a.x, a.y, a.z);
     glm::vec3 bPos = glm::vec3(b.x, b.y, b.z);
 
@@ -167,7 +167,7 @@ glm::vec3 MarchingCubes::interpolate(Point a, Point b) {
     }
 }
 
-void MarchingCubes::smoothShading(std::vector<Triangle> triangles) {
+void MarchingCubesCPUImpl::smoothShading(std::vector<Triangle> triangles) {
     vertexBuff.clear();
     indicesBuff.clear();
 
@@ -187,7 +187,7 @@ void MarchingCubes::smoothShading(std::vector<Triangle> triangles) {
     }
 }
 
-void MarchingCubes::flatShading(std::vector<Triangle> triangles) {
+void MarchingCubesCPUImpl::flatShading(std::vector<Triangle> triangles) {
 
     vertexBuff.clear();
     indicesBuff.clear();
@@ -204,7 +204,7 @@ void MarchingCubes::flatShading(std::vector<Triangle> triangles) {
     }
 }
 
-bool MarchingCubes::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
+bool MarchingCubesCPUImpl::pushUniqueVertices(std::unordered_map<glm::vec3, GLint> *map, glm::vec3 position, glm::vec3 normal, GLint current) {
     //TODO: Alterar implementação para melhor controle da implementação de geometria suave
     if (map->find(position) == map->end()) {
         map->insert(std::make_pair(position, current));

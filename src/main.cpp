@@ -89,9 +89,9 @@ void mainLoop(ImGuiIO& io) {
 
     Point* points = createPoints(param);
 
-    Program* cpuProgram = new MarchingCubes(param, baseShader, points);
+    Program* cpuProgram = new MarchingCubesCPUImpl(param, baseShader, points);
     Program* computeProgram = new MarchingCubesComputeImpl(param, baseShader, points);
-    //Program* meshShaderProgram = new MeshMarchingCubes(param, baseShader, points);
+    //Program* meshShaderProgram = new MeshMarchingCubesCPUImpl(param, baseShader, points);
 
     Program* program = getProgram(param, cpuProgram, computeProgram, computeProgram);
 
