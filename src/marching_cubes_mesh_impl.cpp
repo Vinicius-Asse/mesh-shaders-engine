@@ -63,7 +63,7 @@ void MarchingCubesMeshImpl::draw()
 
 void MarchingCubesMeshImpl::executeMeshShader()
 {
-    GLuint pointsCount = param->pointsCount;
+    GLuint sphereCount = param->pointsCount;
 
     meshShader->enable();
     glm::mat4 mvpMatrix = Camera::MainCamera->getMVPMatrix(glm::mat4(1.0f));
@@ -84,18 +84,22 @@ void MarchingCubesMeshImpl::executeMeshShader()
     int liLoc = glGetUniformLocation(meshShader->uId, "u_linear");
     glUniform1ui(liLoc, param->linearInterp ? 1 : 0);
 
-    // POINTS COUNT UNIFORM
-    int pcLoc = glGetUniformLocation(meshShader->uId, "u_pointsCount");
-    glUniform1ui(pcLoc, pointsCount);
+    // SPHERE COUNT UNIFORM
+    int srLoc = glGetUniformLocation(meshShader->uId, "u_sphereCount");
+    glUniform1ui(srLoc, sphereCount);
 
     // WORLD BOUNDS UNIFORM
     int wbLoc = glGetUniformLocation(meshShader->uId, "u_worldBounds");
     glUniform3f(wbLoc, param->worldBounds.x, param->worldBounds.y, param->worldBounds.z);
 
-    // POINTS LEVEL UNIFORM
-    GLfloat* pts = (GLfloat*) malloc(sizeof(float) * 4 * pointsCount);
+    // POINTS COUNT UNIFORM
+    int pnLoc = glGetUniformLocation(meshShader->uId, "u_pointsCount");
+    glUniform3ui(pnLoc, qX, qY, qZ);
+
+    // SPHERES LEVEL UNIFORM
+    GLfloat* pts = (GLfloat*) malloc(sizeof(float) * 4 * sphereCount);
     int curr = 0;
-    for(int i = 0; i < pointsCount; i++) {
+    for(int i = 0; i < sphereCount; i++) {
         pts[curr+0] = points[i].x;
         pts[curr+1] = points[i].y;
         pts[curr+2] = points[i].z;
@@ -103,26 +107,45 @@ void MarchingCubesMeshImpl::executeMeshShader()
         curr+=4;
     }
 
-    int ptsLoc = glGetUniformLocation(meshShader->uId, "u_points");
-    glUniform4fv(ptsLoc, pointsCount, pts);
+    int ptsLoc = glGetUniformLocation(meshShader->uId, "u_spheres");
+    glUniform4fv(ptsLoc, sphereCount, pts);
 
-    // TrizTable UNIFORM
-    const int tableSize = 4096; // 258 * 16
-    GLint* triPts = (GLint*) malloc(sizeof(GLint) * tableSize);
-    int c = 0;
-    for(int i = 0; i < 256; i++) {
-        for(int j = 0; j < 16; j++) {
-            triPts[c++] = triTable[i][j];
+    // Setting up TrizTable SSBO
+    GLuint trizTableSSBO;
+    {
+        glGenBuffers(1, &trizTableSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trizTableSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * 4096 , NULL, GL_STATIC_READ);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, trizTableSSBO);
+
+        GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+        int* trizTablePtr = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int) * 4096, bufMask);
+
+        int c = 0;
+        for(int i = 0; i < 256; i++) {
+            for(int j = 0; j < 16; j++) {
+                trizTablePtr[c++] = triTable[i][j];
+            }
         }
+        
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
-    int triLoc = glGetUniformLocation(meshShader->uId, "u_trizTable");
-    glUniform1iv(triLoc, tableSize, triPts);
+    // Setting up Atomic Counter Buffer
+    GLuint countBuff;
+    {
+        GLuint zero = 0;
+        glGenBuffers(1, &countBuff);
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
+        glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, countBuff);
+        glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_COPY);
+        glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &zero);
+    }
 
     //TODO: Adicionar controle de Meshlets.
     //Primeiro argumento: offset. 
     //Segundo argumento: quantidade de WorkGroups.
-    glDrawMeshTasksNV(0, qX * qY * qZ);
+    glDrawMeshTasksNV(0, (qX * qY * qZ) / 32);
 
     meshShader->disable();
 }

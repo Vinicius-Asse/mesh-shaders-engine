@@ -301,21 +301,22 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
 
     ImGui::Begin("Informações");
     {
-        ImGui::Text ("Suporte à Mesh Shaders      :", supportMeshShader ? "SIM" : "NÃO");
+        std::string supportMeshShaderStr = supportMeshShader ? "SIM" : "NÃO";
+        ImGui::Text(("Suporte à Mesh Shaders      :" + supportMeshShaderStr).c_str());
 
         if (supportMeshShader) {
-            ImGui::Text("Qnt. Max. Task Draw         : ", std::to_string(maxTaskQnt));
-            ImGui::Text("Qnt. Max. Output Vertices   : ", std::to_string(maxVertices));
-            ImGui::Text("Qnt. Max. Output Primitivos : ", std::to_string(maxPrimitives));
+            ImGui::Text(("Qnt. Max. Task Draw         : " + std::to_string(maxTaskQnt)).c_str());
+            ImGui::Text(("Qnt. Max. Output Vertices   : " + std::to_string(maxVertices)).c_str());
+            ImGui::Text(("Qnt. Max. Output Primitivos : " + std::to_string(maxPrimitives)).c_str());
         }
 
         ImGui::Separator();
 
-        ImGui::Text("Quadros por Segundo      : ", std::to_string(framerate));
-        ImGui::Text("Quantidade de Triangulos : ", program->meshInfo["trizCount"]);
-        ImGui::Text("Quantidade de Vertices   : ", program->meshInfo["vertexCount"]);
-        ImGui::Text("Quantidade de Indices    : ", program->meshInfo["indexCount"]);
-        ImGui::Text("Tempo de Geração (ms)    : ", program->meshInfo["timeGeneratingMesh"]);
+        ImGui::Text(("Quadros por Segundo      : " + std::to_string(framerate)).c_str());
+        ImGui::Text(("Quantidade de Triangulos : " + program->meshInfo["trizCount"]).c_str());
+        ImGui::Text(("Quantidade de Vertices   : " + program->meshInfo["vertexCount"]).c_str());
+        ImGui::Text(("Quantidade de Indices    : " + program->meshInfo["indexCount"]).c_str());
+        ImGui::Text(("Tempo de Geração (ms)    : " + program->meshInfo["timeGeneratingMesh"]).c_str());
     }
     ImGui::End();
 
