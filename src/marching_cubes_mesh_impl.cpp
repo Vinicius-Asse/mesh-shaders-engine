@@ -149,19 +149,10 @@ void MarchingCubesMeshImpl::executeMeshShader()
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
-    // Setting up Triangles SSBO
-    GLuint trianglesSSBO;
-    {
-        glGenBuffers(1, &trianglesSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * qX * qY * qZ, NULL, GL_STATIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, trianglesSSBO);
-    }
-
     //TODO: Adicionar controle de Meshlets.
     //Primeiro argumento: offset. 
     //Segundo argumento: quantidade de WorkGroups.
-    glDrawMeshTasksNV(0, (qX * qY * qZ));
+    glDrawMeshTasksNV(0, (qX * qY * qZ) / 1);
 
     // Retrieving Triangles Count
     GLuint trizCount;
@@ -172,27 +163,13 @@ void MarchingCubesMeshImpl::executeMeshShader()
         glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     }
 
-    // Retrieving Triangles Buffer Data
-    Triangle* trianglesPtr = nullptr;
-    {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
-        trianglesPtr = (Triangle*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-        for(int i = 0; i < 1; i++) {
-            Triangle t = trianglesPtr[i];
-            LOG("X: " << t.ver0.x << ", Y: " << t.ver0.y << ", Z: " << t.ver0.z << ", V: " << t.ver0.w);
-        }
-    }
-
     // Releasing buffers
-    glDeleteBuffers(1, &trianglesSSBO);
     glDeleteBuffers(1, &trizTableSSBO);
     glDeleteBuffers(1, &countBuff);
 
-    GLint verticesOutQnd, primitivesOutQnt;
-    glGetProgramiv(meshShader->uId, GL_MESH_VERTICES_OUT_NV, &verticesOutQnd);
-    glGetProgramiv(meshShader->uId, GL_MESH_PRIMITIVES_OUT_NV, &primitivesOutQnt);
+    //GLint verticesOutQnd, primitivesOutQnt;
+    //glGetProgramiv(meshShader->uId, GL_MESH_VERTICES_OUT_NV, &verticesOutQnd);
+    //glGetProgramiv(meshShader->uId, GL_MESH_PRIMITIVES_OUT_NV, &primitivesOutQnt);
 
     meshInfo["trizCount"] = std::to_string(trizCount);
     meshInfo["vertexCount"] = std::to_string(trizCount * 3);
