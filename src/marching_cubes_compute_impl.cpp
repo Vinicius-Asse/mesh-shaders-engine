@@ -36,7 +36,8 @@ void MarchingCubesComputeImpl::update() {
 
     unsigned __int64 startTime = Utils::currentTimeInMillis();
     generateMesh();
-    meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime); }
+    meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime); 
+}
 
 /***
  * Método Executado ao Fim de Toda Frame

@@ -11,14 +11,15 @@ layout(triangles) out;
 
 // Número máximo de vértices e primitivos construidos pelo workgroup
 // Se os primitivos são triangulos, max_primitives = max_vertices * 3
-layout(max_vertices=18, max_primitives=6) out;
+// 64 e 126 são os números recomendados pela Nvidia para melhor aproveitamento da memória.
+layout(max_vertices=12, max_primitives=4) out;
 
 // Se não redeclararmos gl_PerVertex, irá ocorrer o seguinte erro de compilação:
 // error C7592: ARB_separate_shader_objects requires built-in block gl_PerVertex to be redeclared before accessing its members
 out gl_PerVertex { vec4 gl_Position; } gl_Why;
 
 // Declaração das estruturas de saída por thread
-out gl_MeshPerVertexNV { vec4 gl_Position; } gl_MeshVerticesNV[]; //[max_primitives]
+out gl_MeshPerVertexNV { vec4 gl_Position; } gl_MeshVerticesNV[]; //[max_vertices]
 
 out uint gl_PrimitiveCountNV;     // Número atual de triangulos construídos pelo workgroup
 out uint gl_PrimitiveIndicesNV[]; // [max_primitives * 3 for triangles]
@@ -33,7 +34,7 @@ out PerVertexData
 { 
     vec4 color;
     vec4 normal;
-} v_out[];
+} v_out[];  //[max_vertices]
 
 struct Triangle 
 {
@@ -165,6 +166,7 @@ void main()
 
     if (index == 0 || index == 256) return;
 
+    uint trizCount = 0;
     for (int i = 0; triTable[getTriTableIndex(index, i)] != -1; i+=3) 
     {
         int idx = triTable[getTriTableIndex(index, i+0)];
@@ -177,26 +179,30 @@ void main()
         t.v2 = interpolate(corners[cornerListA[idz]], corners[cornerListB[idz]]);
         t.norm = getNormalVector(t);
 
-        gl_MeshVerticesNV[gl_PrimitiveCountNV * 3 + 0].gl_Position = MVP * t.v0;
-        gl_MeshVerticesNV[gl_PrimitiveCountNV * 3 + 1].gl_Position = MVP * t.v1;
-        gl_MeshVerticesNV[gl_PrimitiveCountNV * 3 + 2].gl_Position = MVP * t.v2;
+        gl_MeshVerticesNV[trizCount * 3 + 0].gl_Position = MVP * t.v0;
+        gl_MeshVerticesNV[trizCount * 3 + 1].gl_Position = MVP * t.v1;
+        gl_MeshVerticesNV[trizCount * 3 + 2].gl_Position = MVP * t.v2;
 
-        v_out[gl_PrimitiveCountNV * 3 + 0].color = vec4(colors[0], 1.0);
-        v_out[gl_PrimitiveCountNV * 3 + 0].normal = t.norm;
+        v_out[trizCount * 3 + 0].color = vec4(colors[0], 1.0);
+        v_out[trizCount * 3 + 0].normal = t.norm;
 
-  	    v_out[gl_PrimitiveCountNV * 3 + 1].color = vec4(colors[1], 1.0);
-  	    v_out[gl_PrimitiveCountNV * 3 + 1].normal = t.norm;
+  	    v_out[trizCount * 3 + 1].color = vec4(colors[1], 1.0);
+  	    v_out[trizCount * 3 + 1].normal = t.norm;
 
-  	    v_out[gl_PrimitiveCountNV * 3 + 2].color = vec4(colors[2], 1.0);
-  	    v_out[gl_PrimitiveCountNV * 3 + 2].normal = t.norm;
+  	    v_out[trizCount * 3 + 2].color = vec4(colors[2], 1.0);
+  	    v_out[trizCount * 3 + 2].normal = t.norm;
 
-        gl_PrimitiveIndicesNV[gl_PrimitiveCountNV * 3 + 0] = gl_PrimitiveCountNV * 3 + 0;
-        gl_PrimitiveIndicesNV[gl_PrimitiveCountNV * 3 + 1] = gl_PrimitiveCountNV * 3 + 1;
-        gl_PrimitiveIndicesNV[gl_PrimitiveCountNV * 3 + 2] = gl_PrimitiveCountNV * 3 + 2;
-        
-        gl_PrimitiveCountNV = 1;
+        gl_PrimitiveIndicesNV[trizCount * 3 + 0] = trizCount * 3 + 0;
+        gl_PrimitiveIndicesNV[trizCount * 3 + 1] = trizCount * 3 + 1;
+        gl_PrimitiveIndicesNV[trizCount * 3 + 2] = trizCount * 3 + 2;
+
+        trizCount++;
         atomicCounterIncrement(trianglesCount);
+        memoryBarrier();
     }
+
+    gl_PrimitiveCountNV += trizCount;
+    memoryBarrier();
 }
   
 
@@ -215,6 +221,6 @@ uniform vec4 u_lightDir;
  
 void main()
 {
-    float diffuse = max(dot(fragIn.normal, vec4(-u_lightDir.xyz, 1.0)), 0.5);
-	FragColor = fragIn.color * diffuse;
+    float diffuse = max(dot(fragIn.normal, vec4(normalize(-u_lightDir.xyz), 0.0)), 0.15);
+	FragColor = vec4(1.0, 1.0, 1.0, 1.0) * diffuse;
 }

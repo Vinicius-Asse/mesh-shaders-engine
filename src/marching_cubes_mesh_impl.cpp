@@ -52,7 +52,9 @@ void MarchingCubesMeshImpl::draw()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_CULL_FACE);
 
+    unsigned __int64 startTime = Utils::currentTimeInMillis();
     executeMeshShader();
+    meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);
 }
 
 /***
@@ -193,8 +195,8 @@ void MarchingCubesMeshImpl::executeMeshShader()
     glGetProgramiv(meshShader->uId, GL_MESH_PRIMITIVES_OUT_NV, &primitivesOutQnt);
 
     meshInfo["trizCount"] = std::to_string(trizCount);
-    meshInfo["vertexCount"] = std::to_string(verticesOutQnd);
-    meshInfo["indexCount"] = std::to_string(primitivesOutQnt);
+    meshInfo["vertexCount"] = std::to_string(trizCount * 3);
+    meshInfo["indexCount"] = std::to_string(trizCount * 3);
 
     meshShader->disable();
 }
