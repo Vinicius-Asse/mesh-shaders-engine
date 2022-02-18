@@ -275,7 +275,7 @@ void clearScreen(float r, float g, float b, float a) {
 
 void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera camera) {
     static bool firstDraw = true;
-    static GLint maxTaskQnt, maxVertices, maxPrimitives;
+    static GLint maxTaskQnt, maxVertices, maxPrimitives, maxWorkgroupSizeX, maxWorkgroupSizeY, maxWorkgroupSizeZ;
     static bool supportMeshShader = false;
     
     if (firstDraw) {
@@ -286,6 +286,10 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
             glGetIntegerv(GL_MAX_DRAW_MESH_TASKS_COUNT_NV, &maxTaskQnt);
             glGetIntegerv(GL_MAX_MESH_OUTPUT_VERTICES_NV, &maxVertices);
             glGetIntegerv(GL_MAX_MESH_OUTPUT_PRIMITIVES_NV, &maxPrimitives);
+
+            glGetIntegeri_v(GL_MAX_MESH_WORK_GROUP_SIZE_NV, 0, &maxWorkgroupSizeX);
+            glGetIntegeri_v(GL_MAX_MESH_WORK_GROUP_SIZE_NV, 1, &maxWorkgroupSizeY);
+            glGetIntegeri_v(GL_MAX_MESH_WORK_GROUP_SIZE_NV, 2, &maxWorkgroupSizeZ);
         }
         firstDraw = false;
     }
@@ -302,9 +306,16 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
     ImGui::Begin("Informações");
     {
         std::string supportMeshShaderStr = supportMeshShader ? "SIM" : "NÃO";
-        ImGui::Text(("Suporte à Mesh Shaders      :" + supportMeshShaderStr).c_str());
+        ImGui::Text(("Suporte à Mesh Shaders      : " + supportMeshShaderStr).c_str());
 
         if (supportMeshShader) {
+            std::string maxWorkgroupSizeStr = "("+
+                std::to_string(maxWorkgroupSizeX)+" x "+
+                std::to_string(maxWorkgroupSizeY)+" x "+
+                std::to_string(maxWorkgroupSizeZ)+
+            ")";
+
+            ImGui::Text(("Tamanho Max. WorkGroup      : " + maxWorkgroupSizeStr).c_str());
             ImGui::Text(("Qnt. Max. Task Draw         : " + std::to_string(maxTaskQnt)).c_str());
             ImGui::Text(("Qnt. Max. Output Vertices   : " + std::to_string(maxVertices)).c_str());
             ImGui::Text(("Qnt. Max. Output Primitivos : " + std::to_string(maxPrimitives)).c_str());

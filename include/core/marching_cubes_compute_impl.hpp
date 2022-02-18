@@ -31,8 +31,6 @@ class MarchingCubesComputeImpl : public Program
 public:
     MarchingCubesComputeImpl(Parameters*, Shader*, Point*);
 
-    std::map<std::string, std::string> meshInfo;
-
     void start();
     void input(SDL_Event*);
     void update();

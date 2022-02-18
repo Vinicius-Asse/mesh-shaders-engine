@@ -67,10 +67,15 @@ void MarchingCubesMeshImpl::executeMeshShader()
 
     meshShader->enable();
     glm::mat4 mvpMatrix = Camera::MainCamera->getMVPMatrix(glm::mat4(1.0f));
+    glm::vec3 lightDir = Camera::MainCamera->lightDir;
 
     // MVP MATRIX UNIFORM
     int mvpLoc = glGetUniformLocation(meshShader->uId, "MVP");
     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+
+    // LIGTH DIRECTION UNIFORM
+    int lightDirLoc = glGetUniformLocation(meshShader->uId, "u_lightDir");
+    glUniform4f(lightDirLoc, lightDir.x, lightDir.y, lightDir.z, 1.0f);
 
     // SURFACE LEVEL UNIFORM
     int slLoc = glGetUniformLocation(meshShader->uId, "u_surfaceLevel");
@@ -85,16 +90,16 @@ void MarchingCubesMeshImpl::executeMeshShader()
     glUniform1ui(liLoc, param->linearInterp ? 1 : 0);
 
     // SPHERE COUNT UNIFORM
-    int srLoc = glGetUniformLocation(meshShader->uId, "u_sphereCount");
+    int srLoc = glGetUniformLocation(meshShader->uId, "u_spheresCount");
     glUniform1ui(srLoc, sphereCount);
+
+    // POINTS COUNT UNIFORM
+    int pnLoc = glGetUniformLocation(meshShader->uId, "u_pointsCount");
+    glUniform3i(pnLoc, qX, qY, qZ);
 
     // WORLD BOUNDS UNIFORM
     int wbLoc = glGetUniformLocation(meshShader->uId, "u_worldBounds");
     glUniform3f(wbLoc, param->worldBounds.x, param->worldBounds.y, param->worldBounds.z);
-
-    // POINTS COUNT UNIFORM
-    int pnLoc = glGetUniformLocation(meshShader->uId, "u_pointsCount");
-    glUniform3ui(pnLoc, qX, qY, qZ);
 
     // SPHERES LEVEL UNIFORM
     GLfloat* pts = (GLfloat*) malloc(sizeof(float) * 4 * sphereCount);
@@ -111,12 +116,23 @@ void MarchingCubesMeshImpl::executeMeshShader()
     glUniform4fv(ptsLoc, sphereCount, pts);
 
     // Setting up TrizTable SSBO
+    // Setting up Atomic Counter Buffer
+    GLuint countBuff;
+    {
+        GLuint zero = 0;
+        glGenBuffers(1, &countBuff);
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
+        glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, countBuff);
+        glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_COPY);
+        glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &zero);
+    }
+
     GLuint trizTableSSBO;
     {
         glGenBuffers(1, &trizTableSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trizTableSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * 4096 , NULL, GL_STATIC_READ);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, trizTableSSBO);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, trizTableSSBO);
 
         GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
         int* trizTablePtr = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int) * 4096, bufMask);
@@ -131,21 +147,54 @@ void MarchingCubesMeshImpl::executeMeshShader()
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
 
-    // Setting up Atomic Counter Buffer
-    GLuint countBuff;
+    // Setting up Triangles SSBO
+    GLuint trianglesSSBO;
     {
-        GLuint zero = 0;
-        glGenBuffers(1, &countBuff);
-        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
-        glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 1, countBuff);
-        glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_COPY);
-        glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &zero);
+        glGenBuffers(1, &trianglesSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * qX * qY * qZ, NULL, GL_STATIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, trianglesSSBO);
     }
 
     //TODO: Adicionar controle de Meshlets.
     //Primeiro argumento: offset. 
     //Segundo argumento: quantidade de WorkGroups.
-    glDrawMeshTasksNV(0, (qX * qY * qZ) / 32);
+    glDrawMeshTasksNV(0, (qX * qY * qZ));
+
+    // Retrieving Triangles Count
+    GLuint trizCount;
+    {
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
+        GLuint* trizCountPtr = (GLuint*) glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_ONLY);
+        trizCount = trizCountPtr[0];
+        glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    }
+
+    // Retrieving Triangles Buffer Data
+    Triangle* trianglesPtr = nullptr;
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, trianglesSSBO);
+        trianglesPtr = (Triangle*) glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+        for(int i = 0; i < 1; i++) {
+            Triangle t = trianglesPtr[i];
+            LOG("X: " << t.ver0.x << ", Y: " << t.ver0.y << ", Z: " << t.ver0.z << ", V: " << t.ver0.w);
+        }
+    }
+
+    // Releasing buffers
+    glDeleteBuffers(1, &trianglesSSBO);
+    glDeleteBuffers(1, &trizTableSSBO);
+    glDeleteBuffers(1, &countBuff);
+
+    GLint verticesOutQnd, primitivesOutQnt;
+    glGetProgramiv(meshShader->uId, GL_MESH_VERTICES_OUT_NV, &verticesOutQnd);
+    glGetProgramiv(meshShader->uId, GL_MESH_PRIMITIVES_OUT_NV, &primitivesOutQnt);
+
+    meshInfo["trizCount"] = std::to_string(trizCount);
+    meshInfo["vertexCount"] = std::to_string(verticesOutQnd);
+    meshInfo["indexCount"] = std::to_string(primitivesOutQnt);
 
     meshShader->disable();
 }

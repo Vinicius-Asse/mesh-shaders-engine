@@ -4,24 +4,24 @@
 
 // Número de threads por workgroup.
 // Sempre com uma dimensão.
-layout(local_size_x=32) in;
+layout(local_size_x=1) in;
 
 // Layout do primitivo construido por thread
 layout(triangles) out;
 
 // Número máximo de vértices e primitivos construidos pelo workgroup
 // Se os primitivos são triangulos, max_primitives = max_vertices * 3
-layout(max_vertices=256, max_primitives=512) out;
+layout(max_vertices=18, max_primitives=6) out;
 
 // Se não redeclararmos gl_PerVertex, irá ocorrer o seguinte erro de compilação:
 // error C7592: ARB_separate_shader_objects requires built-in block gl_PerVertex to be redeclared before accessing its members
 out gl_PerVertex { vec4 gl_Position; } gl_Why;
 
 // Declaração das estruturas de saída por thread
-out gl_MeshPerVertexNV { vec4 gl_Position; } gl_MeshVerticesNV[];
-out uint gl_PrimitiveCountNV;
-out uint gl_PrimitiveIndicesNV[];
+out gl_MeshPerVertexNV { vec4 gl_Position; } gl_MeshVerticesNV[]; //[max_primitives]
 
+out uint gl_PrimitiveCountNV;     // Número atual de triangulos construídos pelo workgroup
+out uint gl_PrimitiveIndicesNV[]; // [max_primitives * 3 for triangles]
 
 // Inclusão de métodos utilitários e tabelas constantes
 #include "resources/shaders/compute/include/utils.compute"
@@ -29,7 +29,11 @@ out uint gl_PrimitiveIndicesNV[];
 
 
 // Estruturas para execução do algoritmo de Marching Cubes
-out PerVertexData { vec4 color; } v_out[];
+out PerVertexData 
+{ 
+    vec4 color;
+    vec4 normal;
+} v_out[];
 
 struct Triangle 
 {
@@ -39,11 +43,13 @@ struct Triangle
     vec4 norm;
 };
 
-// SSBO da tabela de triangularização
-layout(std430, binding = 0) buffer TriTable  { int triTable[]; };
-
 // Atomic buffer que armazena a quantidade de triangulos construidos
-layout(binding = 1) uniform atomic_uint trianglesCount;
+layout(binding = 0) uniform atomic_uint trianglesCount;
+
+// SSBO da tabela de triangularização
+layout(std430, binding = 1) buffer TriTable { int triTable[]; };
+
+layout(std430, binding = 2) buffer Triangles { Triangle Data[]; };
 
 // Matriz de Model-View-Projection utilizada para converter os pontos 3D
 // Em coordenadas 2D que serão exibidas na tela
@@ -54,7 +60,7 @@ uniform float u_surfaceLevel;
 uniform float u_smooth;
 uniform uint u_linear;
 uniform uint u_spheresCount;
-uniform uvec3 u_pointsCount;
+uniform ivec3 u_pointsCount;
 uniform vec3 u_worldBounds;
 uniform vec4 u_spheres[15]; //15 é o número maximo permitido de pontos-esfera
 
@@ -106,9 +112,9 @@ const int getTriTableIndex(int _x, int _y)
 */
 vec4 getPoint(uint _x, uint _y, uint _z)
 {
-    float x = remap(_x, 0, u_pointsCount.x - 1, -u_worldBounds.x/2.0f, u_worldBounds.x/2.0f);
-    float y = remap(_y, 0, u_pointsCount.y - 1, -u_worldBounds.y/2.0f, u_worldBounds.y/2.0f);
-    float z = remap(_z, 0, u_pointsCount.z - 1, -u_worldBounds.z/2.0f, u_worldBounds.z/2.0f);
+    float x = remap(_x, 0, u_pointsCount.x - 1, -u_worldBounds.x/2.0, u_worldBounds.x/2.0);
+    float y = remap(_y, 0, u_pointsCount.y - 1, -u_worldBounds.y/2.0, u_worldBounds.y/2.0);
+    float z = remap(_z, 0, u_pointsCount.z - 1, -u_worldBounds.z/2.0, u_worldBounds.z/2.0);
 
     float value = 2.5;
     for (int i = 0; i < u_spheresCount; i++) 
@@ -123,7 +129,7 @@ vec4 getPoint(uint _x, uint _y, uint _z)
 ivec3 _getId() 
 {
     uint id = gl_GlobalInvocationID.x;
-    return ivec3(id / (u_pointsCount.x * u_pointsCount.x), id / u_pointsCount.y, id % u_pointsCount.z);
+    return ivec3(id / (u_pointsCount.x * u_pointsCount.x), (id / u_pointsCount.y) % u_pointsCount.y, id % u_pointsCount.z);
 }
 
 void main()
@@ -171,21 +177,25 @@ void main()
         t.v2 = interpolate(corners[cornerListA[idz]], corners[cornerListB[idz]]);
         t.norm = getNormalVector(t);
 
-        uint currTriangle = atomicCounterIncrement(trianglesCount);
+        gl_MeshVerticesNV[gl_PrimitiveCountNV * 3 + 0].gl_Position = MVP * t.v0;
+        gl_MeshVerticesNV[gl_PrimitiveCountNV * 3 + 1].gl_Position = MVP * t.v1;
+        gl_MeshVerticesNV[gl_PrimitiveCountNV * 3 + 2].gl_Position = MVP * t.v2;
 
-        gl_MeshVerticesNV[0].gl_Position = MVP * t.v0;
-        gl_MeshVerticesNV[1].gl_Position = MVP * t.v1;
-        gl_MeshVerticesNV[2].gl_Position = MVP * t.v2;
+        v_out[gl_PrimitiveCountNV * 3 + 0].color = vec4(colors[0], 1.0);
+        v_out[gl_PrimitiveCountNV * 3 + 0].normal = t.norm;
 
-        v_out[0].color = vec4(colors[0], 1.0);
-  	    v_out[1].color = vec4(colors[1], 1.0);
-  	    v_out[2].color = vec4(colors[2], 1.0);
+  	    v_out[gl_PrimitiveCountNV * 3 + 1].color = vec4(colors[1], 1.0);
+  	    v_out[gl_PrimitiveCountNV * 3 + 1].normal = t.norm;
 
-        // FRONT FACE First Triangle
-        gl_PrimitiveIndicesNV[0] = 0;
-        gl_PrimitiveIndicesNV[1] = 1;
-        gl_PrimitiveIndicesNV[2] = 2;
+  	    v_out[gl_PrimitiveCountNV * 3 + 2].color = vec4(colors[2], 1.0);
+  	    v_out[gl_PrimitiveCountNV * 3 + 2].normal = t.norm;
+
+        gl_PrimitiveIndicesNV[gl_PrimitiveCountNV * 3 + 0] = gl_PrimitiveCountNV * 3 + 0;
+        gl_PrimitiveIndicesNV[gl_PrimitiveCountNV * 3 + 1] = gl_PrimitiveCountNV * 3 + 1;
+        gl_PrimitiveIndicesNV[gl_PrimitiveCountNV * 3 + 2] = gl_PrimitiveCountNV * 3 + 2;
+        
         gl_PrimitiveCountNV = 1;
+        atomicCounterIncrement(trianglesCount);
     }
 }
   
@@ -198,9 +208,13 @@ layout(location = 0) out vec4 FragColor;
 in PerVertexData
 {
 	vec4 color;
-} fragIn;	
+    vec4 normal;
+} fragIn;
+
+uniform vec4 u_lightDir;
  
 void main()
 {
-	FragColor = fragIn.color;
+    float diffuse = max(dot(fragIn.normal, vec4(-u_lightDir.xyz, 1.0)), 0.5);
+	FragColor = fragIn.color * diffuse;
 }
