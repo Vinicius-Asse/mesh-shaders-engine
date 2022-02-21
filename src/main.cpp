@@ -47,7 +47,7 @@ void setupWindow(const char *title){
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     
     window = SDL_CreateWindow(
@@ -219,7 +219,7 @@ void updatePoints(Point* points, Parameters* param) {
 }
 
 void finishError(std::string err_msg) {
-    std::cout << "Ocorreu um problema durante a execução do programa: " << err_msg << std::endl;
+    std::cout << "Ocorreu um problema durante a execucao do programa: " << err_msg << std::endl;
     fflush(stdout);
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", err_msg.c_str(), NULL);
     SDL_Quit();
