@@ -3,7 +3,7 @@
 #extension GL_ARB_compute_shader : enable
 #extension GL_ARB_shader_storage_buffer_object : enable
 
-#include "resources/shaders/include/noise.compute"
+#include "resources/shaders/.include/noise.compute"
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 

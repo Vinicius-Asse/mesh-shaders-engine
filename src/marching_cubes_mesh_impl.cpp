@@ -5,7 +5,7 @@
  **/
 MarchingCubesMeshImpl::MarchingCubesMeshImpl(Parameters *_param, Shader *_baseShader, Point *_points) : Program(_param, _baseShader, _points)
 {
-    meshShader = new Shader("resources/shaders/mesh/marching.mesh", ShaderType::MESH_SHADER);
+    meshShader = new Shader("resources/shaders/mesh/marching.mesh.glsl", ShaderType::MESH_SHADER);
 }
 
 /***

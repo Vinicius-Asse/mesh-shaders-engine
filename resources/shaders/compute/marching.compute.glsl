@@ -24,8 +24,8 @@ uniform uint u_pointsCount;
 uniform vec3 u_worldBounds;
 uniform vec4 u_points[15];
 
-#include "resources/shaders/compute/include/utils.compute"
-#include "resources/shaders/compute/include/tables.compute"
+#include "resources/shaders/.include/utils.glsl"
+#include "resources/shaders/.include/tables.glsl"
 
 
 vec4 getNormalVector(Triangle t) {

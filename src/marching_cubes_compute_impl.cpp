@@ -5,7 +5,7 @@
 **/
 MarchingCubesComputeImpl::MarchingCubesComputeImpl(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) {
     mesh = nullptr;
-    computeShader = new Shader("resources/shaders/compute/marching.glsl", ShaderType::COMPUTE_SHADER);
+    computeShader = new Shader("resources/shaders/compute/marching.compute.glsl", ShaderType::COMPUTE_SHADER);
 }
 
 /***

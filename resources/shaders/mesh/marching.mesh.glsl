@@ -26,8 +26,8 @@ out uint gl_PrimitiveCountNV;     // Número atual de triangulos construídos pe
 out uint gl_PrimitiveIndicesNV[]; // [max_primitives * 3 for triangles]
 
 // Inclusão de métodos utilitários e tabelas constantes
-#include "resources/shaders/compute/include/utils.compute"
-#include "resources/shaders/compute/include/tables.compute"
+#include "resources/shaders/.include/utils.glsl"
+#include "resources/shaders/.include/tables.glsl"
 
 
 // Estruturas para execução do algoritmo de Marching Cubes
