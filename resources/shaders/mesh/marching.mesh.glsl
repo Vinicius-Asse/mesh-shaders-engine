@@ -40,7 +40,7 @@ out PerVertexData
 // SSBO da tabela de triangularização
 layout(std430, binding = 0) buffer TriTable { int triTable[]; };
 
-// SSBO da buffer contador de triangulos
+// SSBO da buffer contador de triangulos por workgroups
 layout(std430, binding = 1) buffer TriCountBuff { int triCountBuff[]; };
 
 
@@ -115,15 +115,15 @@ vec4 getPoint(uint _x, uint _y, uint _z)
     return vec4(x, y, z, value);
 }
 
-ivec3 _getId() 
+uvec3 _getId() 
 {
     uint id = gl_GlobalInvocationID.x;
-    return ivec3(id / (u_pointsCount.x * u_pointsCount.x), (id / u_pointsCount.y) % u_pointsCount.y, id % u_pointsCount.z);
+    return uvec3(id / (u_pointsCount.x * u_pointsCount.x), (id / u_pointsCount.y) % u_pointsCount.y, id % u_pointsCount.z);
 }
 
 void main()
 {
-    ivec3 id = _getId();
+    uvec3 id = _getId();
     uint localId = gl_LocalInvocationID.x;
     uint globalId = gl_WorkGroupID.x;
 
