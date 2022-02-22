@@ -394,7 +394,10 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
             ImGui::DragFloat("##Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f");
 
             ImGui::Text("Resolução da Malha");
-            ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "%d");
+            if (ImGui::SliderInt("##resolution", &resolutionMultiplier, 1, 20, "%d")) {
+                int res = resolutionMultiplier * 8;
+                LOG("Resolucao da malha: (" << res << "x" << res << "x" << res << ")");
+            }
 
             ImGui::Text("Nível da Superfície");
             ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "%.3f");
