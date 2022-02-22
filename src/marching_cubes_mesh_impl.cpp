@@ -119,13 +119,24 @@ void MarchingCubesMeshImpl::executeMeshShader()
     int ptsLoc = glGetUniformLocation(meshShader->uId, "u_spheres");
     glUniform4fv(ptsLoc, sphereCount, pts);
 
+    // Setting up Atomic Counter Buffer
+    GLuint countBuff;
+    {
+        GLuint zero = 0;
+        glGenBuffers(1, &countBuff);
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
+        glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, countBuff);
+        glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint), NULL, GL_STATIC_COPY);
+        glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, &zero);
+    }
+
     // Setting up TrizTable SSBO
     GLuint trizTableSSBO;
     {
         glGenBuffers(1, &trizTableSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trizTableSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * 4096 , NULL, GL_STATIC_READ);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, trizTableSSBO);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, trizTableSSBO);
 
         GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
         int* trizTablePtr = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int) * 4096, bufMask);
@@ -146,7 +157,7 @@ void MarchingCubesMeshImpl::executeMeshShader()
         glGenBuffers(1, &trizCountSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, trizCountSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(int) * TOTAL_WORKGROUPS , NULL, GL_STATIC_READ);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, trizCountSSBO);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, trizCountSSBO);
 
         GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
         int* trizCountPtr = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int) * TOTAL_WORKGROUPS, bufMask);
@@ -159,7 +170,17 @@ void MarchingCubesMeshImpl::executeMeshShader()
     //Segundo argumento: quantidade de WorkGroups.
     glDrawMeshTasksNV(0, TOTAL_WORKGROUPS);
 
+    // Retrieving Triangles Count
+    GLuint trizCount;
+    {
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, countBuff);
+        GLuint* trizCountPtr = (GLuint*) glMapBuffer(GL_ATOMIC_COUNTER_BUFFER, GL_READ_ONLY);
+        trizCount = trizCountPtr[0];
+        glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    }
+
     // Releasing buffers
+    glDeleteBuffers(1, &countBuff);
     glDeleteBuffers(1, &trizTableSSBO);
     glDeleteBuffers(1, &trizCountSSBO);
 
@@ -167,9 +188,9 @@ void MarchingCubesMeshImpl::executeMeshShader()
     //glGetProgramiv(meshShader->uId, GL_MESH_VERTICES_OUT_NV, &verticesOutQnd);
     //glGetProgramiv(meshShader->uId, GL_MESH_PRIMITIVES_OUT_NV, &primitivesOutQnt);
 
-    //meshInfo["trizCount"] = std::to_string(trizCount);
-    //meshInfo["vertexCount"] = std::to_string(trizCount * 3);
-    //meshInfo["indexCount"] = std::to_string(trizCount * 3);
+    meshInfo["trizCount"] = std::to_string(trizCount);
+    meshInfo["vertexCount"] = std::to_string(trizCount * 3);
+    meshInfo["indexCount"] = std::to_string(trizCount * 3);
 
     meshShader->disable();
 }

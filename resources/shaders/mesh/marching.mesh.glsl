@@ -1,5 +1,5 @@
 #!mesh shader
-#version 450
+#version 460
 #extension GL_NV_mesh_shader : require
 #extension GL_NV_shader_buffer_load : enable
 
@@ -37,11 +37,15 @@ out PerVertexData
     vec4 normal;
 } v_out[];  //[max_vertices]
 
+// SSBO da buffer contador de triangulos por workgroups
+layout(binding = 0) uniform atomic_uint trianglesCount;
+
 // SSBO da tabela de triangularização
-layout(std430, binding = 0) buffer TriTable { int triTable[]; };
+layout(std430, binding = 1) buffer TriTable { int triTable[]; };
 
 // SSBO da buffer contador de triangulos por workgroups
-layout(std430, binding = 1) buffer TriCountBuff { int triCountBuff[]; };
+layout(std430, binding = 2) buffer TriCountBuff { int triCountBuff[]; };
+
 
 
 // Matriz de Model-View-Projection utilizada para converter os pontos 3D
@@ -198,12 +202,13 @@ void main()
     barrier();
     if (localId == 0) {
         gl_PrimitiveCountNV = triCountBuff[globalId];
+        atomicCounterAdd(trianglesCount, triCountBuff[globalId]);
     }
 }
   
 
 #!fragment shader
-#version 450
+#version 460
  
 layout(location = 0) out vec4 FragColor;
  
