@@ -35,9 +35,11 @@ public:
     //~Mesh();
 
     unsigned int VAO, VBO, EBO;
+    int type = GL_TRIANGLES;
 
     void translate(glm::vec3 position); //TODO: Abstrair transformações em classe (Transform)
     void rotate(glm::vec3 rotation); //TODO: Abstrair transformações em classe (Transform)
+    void scale(glm::vec3 scale); //TODO: Abstrair transformações em classe (Transform)
 
 
     void bind();

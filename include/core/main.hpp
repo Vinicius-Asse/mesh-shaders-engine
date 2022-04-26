@@ -55,5 +55,6 @@ void setupImGuiFrame(ImGuiIO& io, SDL_Event e);
 void GLAPIENTRY MessageCallback(GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar*, const void*);
 void drawImGuiElements(Program*, ImGuiIO&, Parameters*, Camera);
 Program* getProgram(Parameters*, Program*, Program*, Program*);
+Mesh* setupWorldBounds(Shader*);
 
 #endif

@@ -13,12 +13,6 @@ MarchingCubesComputeImpl::MarchingCubesComputeImpl(Parameters *_param, Shader* _
 **/
 void MarchingCubesComputeImpl::start() {
     LOG("Start from Compute Shader Implementation");
-
-    wiredCube = Cube::getInstance(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        param->worldBounds,
-        baseShader
-    );
 }
 
 /***
@@ -43,18 +37,6 @@ void MarchingCubesComputeImpl::update() {
  * Método Executado ao Fim de Toda Frame
 **/
 void MarchingCubesComputeImpl::draw() {
-
-    // Turn on wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDisable(GL_CULL_FACE);
-
-    // Draw the box
-    wiredCube->draw();
-
-    // Turn off wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_CULL_FACE);
-
     // Draw Generated Mesh
     mesh->draw();
 }

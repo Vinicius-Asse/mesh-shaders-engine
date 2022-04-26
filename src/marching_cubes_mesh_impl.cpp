@@ -14,11 +14,6 @@ MarchingCubesMeshImpl::MarchingCubesMeshImpl(Parameters *_param, Shader *_baseSh
 void MarchingCubesMeshImpl::start()
 {
     LOG("Start from Compute Shader Implementation");
-
-    wiredCube = Cube::getInstance(
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        param->worldBounds,
-        baseShader);
 }
 
 /***
@@ -41,17 +36,6 @@ void MarchingCubesMeshImpl::update()
  **/
 void MarchingCubesMeshImpl::draw()
 {
-    // Turn on wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDisable(GL_CULL_FACE);
-
-    // Draw the box
-    wiredCube->draw();
-
-    // Turn off wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_CULL_FACE);
-
     unsigned __int64 startTime = Utils::currentTimeInMillis();
     executeMeshShader();
     meshInfo["timeGeneratingMesh"] = std::to_string(Utils::currentTimeInMillis() - startTime);

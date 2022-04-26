@@ -23,7 +23,7 @@ Mesh::Mesh(std::vector<GLint> indices, std::vector<Vertex> vertex, Shader *_shad
     // Setting Positions Attribute
     addAttribute(GL_FLOAT, 3);
 
-    // Setting Collor Attribute
+    // Setting Color Attribute
     addAttribute(GL_FLOAT, 3);
 
     // Setting Normal Attribute
@@ -66,7 +66,7 @@ void Mesh::draw() {
     glUniform4f(ligthColLoc, ligthCol.x, ligthCol.y, ligthCol.z, 1.0f);
 
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(type, indicesCount, GL_UNSIGNED_INT, 0);
 
     shader->disable();
 }
@@ -83,9 +83,9 @@ void Mesh::unbind() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Mesh::addAttribute(GLenum type, int count, bool normalized)
+void Mesh::addAttribute(GLenum _type, int count, bool normalized)
 {
-    glVertexAttribPointer(currAttr, count, type, normalized? GL_FALSE : GL_TRUE, sizeof(Vertex), (void*) nxtAttr);
+    glVertexAttribPointer(currAttr, count, _type, normalized? GL_FALSE : GL_TRUE, sizeof(Vertex), (void*) nxtAttr);
     glEnableVertexAttribArray(currAttr);
 
     nxtAttr += sizeof(float) * count;
@@ -98,6 +98,10 @@ void Mesh::translate(glm::vec3 _position) {
 
 void Mesh::rotate(glm::vec3 _rotation) {
     model = glm::rotate(model, glm::radians(10.0f * (float) TimeDeltaTime), _rotation);
+}
+
+void Mesh::scale(glm::vec3 _scale) {
+    model = glm::scale(model, _scale);
 }
 
 void Mesh::free() {

@@ -24,8 +24,6 @@ private:
 
     Mesh* mesh;
 
-    Cube* wiredCube;
-
     void onCreate();
 
 public:

@@ -19,8 +19,6 @@ class MarchingCubesMeshImpl : public Program
 {
     int qX, qY, qZ;
 
-    Cube *wiredCube;
-
     Shader *meshShader;
 
 public:

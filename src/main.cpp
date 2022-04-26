@@ -82,6 +82,7 @@ void mainLoop(ImGuiIO& io) {
     Camera camera = Camera(glm::vec3(0.0f, 0.0f, 20.0f), 60.0f, window);
 
     Shader* baseShader = new Shader("resources/shaders/base.glsl", ShaderType::VERTEX_SHADER);
+    Shader* wiredShader = new Shader("resources/shaders/wired.glsl", ShaderType::VERTEX_SHADER);
 
     Point* points = createPoints(param);
 
@@ -90,6 +91,9 @@ void mainLoop(ImGuiIO& io) {
     Program* meshProgram = new MarchingCubesMeshImpl(param, baseShader, points);
 
     Program* program = getProgram(param, cpuProgram, computeProgram, meshProgram);
+
+    Mesh* wiredCube = setupWorldBounds(wiredShader);
+    wiredCube->scale(param->worldBounds);
 
     //GAME LOOP
     while(running) {
@@ -129,7 +133,21 @@ void mainLoop(ImGuiIO& io) {
         // DRAW
         {
             //BEGIN DRAW: Clear Screen
-            clearScreen(0.0f, 0.0f, 0.0f, 0.0f);
+            clearScreen(0.0f, 0.0f, 0.0f, 1.0f);
+
+            glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
+
+            // Turn on wireframe mode
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDisable(GL_CULL_FACE);
+            glLineWidth(2.0f);
+
+            wiredCube->draw();
+
+            // Turn off wireframe mode
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_CULL_FACE);
+            glLineWidth(1.0f);
 
             program->draw();
 
@@ -268,7 +286,7 @@ void setupImGuiFrame(ImGuiIO& io, SDL_Event e) {
 }
 
 void clearScreen(float r, float g, float b, float a) {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(r, g, b, a);
     glClearDepth(1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
@@ -471,4 +489,39 @@ Program* getProgram(Parameters* param, Program* cpuProgram, Program* computeProg
     program->start();
 
     return program;
+}
+
+Mesh* setupWorldBounds(Shader* shader) {
+    std::vector<Vertex> vertices = {
+        //     POSITION       |        COLLOR      |     NORMALS     //
+        { -0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Upper Left
+        {  0.5f,  0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Upper Right
+        { -0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Botton Left
+        {  0.5f, -0.5f,  0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f },   // FRONT Botton Right
+
+        { -0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Upper Left
+        {  0.5f,  0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Upper Right
+        { -0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Botton Left
+        {  0.5f, -0.5f, -0.5f,  1.0f,  1.0f,  1.0f,  0.0f, 0.0f,-1.0f },   // BACK Botton Right
+    };
+
+    std::vector<GLint> indices = {
+        0, 1, 
+        2, 3,
+        0, 2,
+        1, 3,
+        4, 5, 
+        6, 7,
+        4, 6,
+        5, 7,
+        0, 4,
+        1, 5,
+        2, 6,
+        3, 7
+    };
+
+    Mesh* mesh = new Mesh(indices, vertices, shader);
+    mesh->type = GL_LINES;
+
+    return mesh;
 }

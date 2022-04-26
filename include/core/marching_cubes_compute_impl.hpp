@@ -24,8 +24,6 @@ class MarchingCubesComputeImpl : public Program
 
     Mesh *mesh;
 
-    Cube *wiredCube;
-
     Shader *computeShader;
 
 public:
