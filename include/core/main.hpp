@@ -42,6 +42,7 @@ double TimeDeltaTime;
 #include <vector>
 #include <cstdlib> 
 #include <ctime>
+#include <queue>
 
 // Definicao de Funcoes
 void setupWindow(const char*);

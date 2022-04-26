@@ -9,6 +9,8 @@
     int              SCREEN_HEIGHT = 600;
     int              framerate;
     int              MAX_FPS       = 1000;
+
+    std::vector<float>     frametimeHistory;
  
 int main(int argc, char** argv) {
 
@@ -166,6 +168,15 @@ void mainLoop(ImGuiIO& io) {
     
         // Framerate Control 
         TimeDeltaTime = timeControl(&startFrame);
+
+        frametimeHistory.push_back(TimeDeltaTime);
+
+        if (frametimeHistory.size() > 50) {
+            frametimeHistory.erase(frametimeHistory.begin());
+        }
+
+        //GLint currentMemoryUsageKb = 0;
+        //glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX, &currentMemoryUsageKb);
     }
 
     delete cpuProgram;
@@ -321,7 +332,7 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
 
     int resolutionMultiplier = param->surfaceResolution / 8.0f;
 
-    ImGui::Begin("Informações");
+    ImGui::Begin("Sistema");
     {
         std::string supportMeshShaderStr = supportMeshShader ? "SIM" : "NÃO";
         ImGui::Text(("Suporte à Mesh Shaders      : " + supportMeshShaderStr).c_str());
@@ -346,19 +357,12 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
         ImGui::Text(("Quantidade de Vertices   : " + program->meshInfo["vertexCount"]).c_str());
         ImGui::Text(("Quantidade de Indices    : " + program->meshInfo["indexCount"]).c_str());
         ImGui::Text(("Tempo de Geração (ms)    : " + program->meshInfo["timeGeneratingMesh"]).c_str());
-    }
-    ImGui::End();
 
-    ImGui::Begin("Meta Balls");
-    {
-        ImGui::Text("Quantidade de Esferas");
-        ImGui::SliderInt("##pointsCount", &param->pointsCount, 0, 10);
+        ImGui::Separator();
 
-        ImGui::Text("Força de atração");
-        ImGui::DragFloat("##gravityForce", &param->gravityForce, 0.001f, 0, 1, "%.2f", 1.0f);
-
-        ImGui::Text("Velocidade de simulação");
-        ImGui::DragFloat("##simSpeed", &param->simulationSpeed, 0.001f, 0, 2.5, "%.2f", 1.0f);
+        if (frametimeHistory.size() >= 50) {
+            ImGui::PlotLines("##Tempo de frame", frametimeHistory.data(), frametimeHistory.size(), 0, "Tempo de Frame", 0.0f, 0.1f, ImVec2(300, 50), 4);
+        }
     }
     ImGui::End();
 
@@ -419,6 +423,19 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
 
             ImGui::Text("Nível da Superfície");
             ImGui::SliderFloat("##surfLevel", &param->surfaceLevel, -1.0, 1.0, "%.3f");
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::CollapsingHeader("Meta Balls")) {
+            ImGui::Text("Quantidade de Esferas");
+            ImGui::SliderInt("##pointsCount", &param->pointsCount, 0, 10);
+
+            ImGui::Text("Força de atração");
+            ImGui::DragFloat("##gravityForce", &param->gravityForce, 0.001f, 0, 1, "%.2f", 1.0f);
+
+            ImGui::Text("Velocidade de simulação");
+            ImGui::DragFloat("##simSpeed", &param->simulationSpeed, 0.001f, 0, 2.5, "%.2f", 1.0f);
         }
     }
     ImGui::End();
