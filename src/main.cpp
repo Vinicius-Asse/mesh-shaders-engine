@@ -10,7 +10,10 @@
     int              framerate;
     int              MAX_FPS       = 1000;
 
+    float           totalVideoMem  = 0;
+
     std::vector<float>     frametimeHistory;
+    std::vector<float>     memoryUsageHistory;
  
 int main(int argc, char** argv) {
 
@@ -26,7 +29,7 @@ int main(int argc, char** argv) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsClassic();
+    ImGui::StyleColorsDark();
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForOpenGL(window, context);
@@ -70,6 +73,10 @@ void setupWindow(const char *title){
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(MessageCallback, 0);
+
+    GLint totalVideoMemoryKb;
+    glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &totalVideoMemoryKb);
+    totalVideoMem = (float)totalVideoMemoryKb/1000;
 
     printf("Versao OpenGL: %s\n", glGetString(GL_VERSION));
 
@@ -135,14 +142,14 @@ void mainLoop(ImGuiIO& io) {
         // DRAW
         {
             //BEGIN DRAW: Clear Screen
-            clearScreen(0.0f, 0.0f, 0.0f, 1.0f);
+            clearScreen(0.035f, 0.035f, 0.035f, 1.0f);
 
             glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
 
             // Turn on wireframe mode
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDisable(GL_CULL_FACE);
-            glLineWidth(2.0f);
+            glLineWidth(1.0f);
 
             wiredCube->draw();
 
@@ -175,8 +182,14 @@ void mainLoop(ImGuiIO& io) {
             frametimeHistory.erase(frametimeHistory.begin());
         }
 
-        //GLint currentMemoryUsageKb = 0;
-        //glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX, &currentMemoryUsageKb);
+        GLint currentMemoryUsageKb = 0;
+        glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &currentMemoryUsageKb);
+
+        memoryUsageHistory.push_back((float) totalVideoMem - (currentMemoryUsageKb / 1000));
+
+        if (memoryUsageHistory.size() > 50) {
+            memoryUsageHistory.erase(memoryUsageHistory.begin());
+        }
     }
 
     delete cpuProgram;
@@ -335,7 +348,13 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
     ImGui::Begin("Sistema");
     {
         std::string supportMeshShaderStr = supportMeshShader ? "SIM" : "NÃO";
-        ImGui::Text(("Suporte à Mesh Shaders      : " + supportMeshShaderStr).c_str());
+        ImGui::Text("Suporte à Mesh Shaders      :");
+        ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Text, supportMeshShader ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+        ImGui::Text(supportMeshShaderStr.c_str());
+        ImGui::PopStyleColor();
+
+        ImGui::Text(("Memória de Vídeo total (mb) : " + std::to_string((int)totalVideoMem)).c_str());
 
         if (supportMeshShader) {
             std::string maxWorkgroupSizeStr = "("+
@@ -352,7 +371,13 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
 
         ImGui::Separator();
 
-        ImGui::Text(("Quadros por Segundo      : " + std::to_string(framerate)).c_str());
+        ImGui::Text("Quadros por Segundo      :");
+        ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol_Text, (framerate > 60) ? IM_COL32(0, 255, 0, 255) : (framerate > 30) ? 
+                    IM_COL32(255, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+        ImGui::Text(std::to_string(framerate).c_str());
+        ImGui::PopStyleColor();
+        
         ImGui::Text(("Quantidade de Triangulos : " + program->meshInfo["trizCount"]).c_str());
         ImGui::Text(("Quantidade de Vertices   : " + program->meshInfo["vertexCount"]).c_str());
         ImGui::Text(("Quantidade de Indices    : " + program->meshInfo["indexCount"]).c_str());
@@ -361,7 +386,10 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
         ImGui::Separator();
 
         if (frametimeHistory.size() >= 50) {
-            ImGui::PlotLines("##Tempo de frame", frametimeHistory.data(), frametimeHistory.size(), 0, "Tempo de Frame", 0.0f, 0.1f, ImVec2(300, 50), 4);
+            ImGui::PlotLines("##TempoFrame", frametimeHistory.data(), frametimeHistory.size(), 0, "Tempo de Frame", 0.0f, 0.1f, ImVec2(300, 50), 4);
+        }
+        if (memoryUsageHistory.size() >= 50) {
+            ImGui::PlotLines("##UsoMemoria", memoryUsageHistory.data(), memoryUsageHistory.size(), 0, "Uso de Memória de Vídeo (mb)", 0.0f, totalVideoMem, ImVec2(300, 50), 4);
         }
     }
     ImGui::End();
@@ -427,7 +455,7 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
 
         ImGui::Separator();
 
-        if (ImGui::CollapsingHeader("Meta Balls")) {
+        if (ImGui::CollapsingHeader("Simulação")) {
             ImGui::Text("Quantidade de Esferas");
             ImGui::SliderInt("##pointsCount", &param->pointsCount, 0, 10);
 
