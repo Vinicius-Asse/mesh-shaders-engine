@@ -115,7 +115,7 @@ Mesh* MarchingCubesCPUImpl::generateMesh(Shader* shader) {
 
     meshInfo["trizCount"] = std::to_string(triangles.size());
     meshInfo["vertexCount"] = std::to_string(vertexBuff.size());
-    meshInfo["indicesCount"] = std::to_string(indicesBuff.size());
+    meshInfo["indexCount"] = std::to_string(indicesBuff.size());
 
     return new Mesh(indicesBuff, vertexBuff, shader);
 }

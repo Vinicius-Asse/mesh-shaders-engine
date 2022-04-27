@@ -165,7 +165,7 @@ void MarchingCubesComputeImpl::generateMesh() {
 
     meshInfo["trizCount"] = std::to_string(trizCount);
     meshInfo["vertexCount"] = std::to_string(vertexBuff.size());
-    meshInfo["indicesCount"] = std::to_string(indicesBuff.size());
+    meshInfo["indexCount"] = std::to_string(indicesBuff.size());
     
     if (mesh != nullptr) mesh->free();
     
