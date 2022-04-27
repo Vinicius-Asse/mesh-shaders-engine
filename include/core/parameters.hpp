@@ -22,5 +22,7 @@ class Parameters
         bool  fullscreen            = false;
         bool  fixedLight            = false;
         bool  lockAspectRatio       = true;
+        bool  wiredMesh             = false;
+        bool  showWorldBounds       = true;
         Implementation  impl        = Implementation::CPU;
 };
