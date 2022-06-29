@@ -125,18 +125,6 @@ unsigned int Shader::compileShader(unsigned int _type, const std::string& source
     glShaderSource(id, 1, &src, nullptr);
     glCompileShader(id);
 
-    int result;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE) {
-        int length;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char* message = (char*)alloca(sizeof(char) * length);
-        glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile " << (_type == GL_VERTEX_SHADER ? "Vertex" : "Fragment") << " shader: " << message << std::endl;
-        glDeleteShader(id);
-        return 0;
-    }
-
     const char* shaderType;
     switch (_type)
     {
@@ -155,6 +143,18 @@ unsigned int Shader::compileShader(unsigned int _type, const std::string& source
     default:
         shaderType = "Invalid Type";
         break;
+    }
+
+    int result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE) {
+        int length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        char* message = (char*)alloca(sizeof(char) * length);
+        glGetShaderInfoLog(id, length, &length, message);
+        std::cout << "Failed to compile " << shaderType << ": " << message << std::endl;
+        glDeleteShader(id);
+        return 0;
     }
 
     TRACE("#Success in '" << shaderType << "' compilation.");
@@ -183,6 +183,8 @@ void Shader::validateProgram(GLint program) {
             
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", infoLog.data(), NULL);
             SDL_Quit();
+        } else {
+            LOG("Deu merda e não diz o que é");
         }
     }
 
