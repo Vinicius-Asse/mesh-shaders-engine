@@ -3,7 +3,9 @@
 /***
  * Construtor do Programa
 **/
-MarchingCubesCPUImpl::MarchingCubesCPUImpl(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) { }
+MarchingCubesCPUImpl::MarchingCubesCPUImpl(Parameters *_param, Shader* _baseShader, Point* _points) : Program(_param, _baseShader, _points) {
+    mesh = nullptr;
+}
 
 /***
  * Método Executado Quando o Programa é Iniciado
@@ -115,7 +117,9 @@ Mesh* MarchingCubesCPUImpl::generateMesh(Shader* shader) {
 
     meshInfo["trizCount"] = std::to_string(triangles.size());
     meshInfo["vertexCount"] = std::to_string(vertexBuff.size());
-    meshInfo["indicesCount"] = std::to_string(indicesBuff.size());
+    meshInfo["indexCount"] = std::to_string(indicesBuff.size());
+
+    if (mesh != nullptr) mesh->free();
 
     return new Mesh(indicesBuff, vertexBuff, shader);
 }

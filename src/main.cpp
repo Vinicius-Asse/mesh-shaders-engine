@@ -10,7 +10,8 @@
     int              framerate;
     int              MAX_FPS       = 1000;
 
-    float           totalVideoMem  = 0;
+    float           totalVideoMem   = 0;
+    float           actualVideoMem  = 0;
 
     std::vector<float>     frametimeHistory;
     std::vector<float>     memoryUsageHistory;
@@ -144,21 +145,37 @@ void mainLoop(ImGuiIO& io) {
             //BEGIN DRAW: Clear Screen
             clearScreen(0.035f, 0.035f, 0.035f, 1.0f);
 
-            glm::mat4 mvpMatrix = camera.getMVPMatrix(glm::mat4(1.0f));
+            if (param->showWorldBounds) {
+                // Turn on wireframe mode
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+                glLineWidth(1.0f);
 
-            // Turn on wireframe mode
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glDisable(GL_CULL_FACE);
-            glLineWidth(1.0f);
+                wiredCube->scale(param->worldBounds);
+                wiredCube->draw();
 
-            wiredCube->draw();
+                // Turn off wireframe mode
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glEnable(GL_CULL_FACE);
+                glLineWidth(1.0f);
+            }
 
-            // Turn off wireframe mode
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glEnable(GL_CULL_FACE);
-            glLineWidth(1.0f);
+            if (param->wiredMesh) {
+                // Turn on wireframe mode
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glDisable(GL_CULL_FACE);
+                glLineWidth(2.0f);
 
-            program->draw();
+                program->draw();
+
+                // Turn off wireframe mode
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glEnable(GL_CULL_FACE);
+                glLineWidth(2.0f);
+            } else {
+                program->draw();
+            }
+
 
             Implementation currImpl = param->impl;
 
@@ -185,7 +202,8 @@ void mainLoop(ImGuiIO& io) {
         GLint currentMemoryUsageKb = 0;
         glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &currentMemoryUsageKb);
 
-        memoryUsageHistory.push_back((float) totalVideoMem - (currentMemoryUsageKb / 1000));
+        actualVideoMem = (float) totalVideoMem - (currentMemoryUsageKb / 1000);
+        memoryUsageHistory.push_back(actualVideoMem);
 
         if (memoryUsageHistory.size() > 50) {
             memoryUsageHistory.erase(memoryUsageHistory.begin());
@@ -345,56 +363,61 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
 
     int resolutionMultiplier = param->surfaceResolution / 8.0f;
 
-    ImGui::Begin("Sistema");
+    ImGui::Begin("Sistema", (bool*)true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
     {
-        std::string supportMeshShaderStr = supportMeshShader ? "SIM" : "NÃO";
-        ImGui::Text("Suporte à Mesh Shaders      :");
-        ImGui::SameLine();
-        ImGui::PushStyleColor(ImGuiCol_Text, supportMeshShader ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
-        ImGui::Text(supportMeshShaderStr.c_str());
-        ImGui::PopStyleColor();
+        if (ImGui::CollapsingHeader("Mesh Shader", ImGuiTreeNodeFlags_DefaultOpen)) {
+            std::string supportMeshShaderStr = supportMeshShader ? "SIM" : "NÃO";
+            ImGui::Text("Suporte à Mesh Shaders      :");
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_Text, supportMeshShader ? IM_COL32(0, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+            ImGui::Text(supportMeshShaderStr.c_str());
+            ImGui::PopStyleColor();
 
-        ImGui::Text(("Memória de Vídeo total (mb) : " + std::to_string((int)totalVideoMem)).c_str());
+            if (supportMeshShader) {
+                std::string maxWorkgroupSizeStr = "("+
+                    std::to_string(maxWorkgroupSizeX)+" x "+
+                    std::to_string(maxWorkgroupSizeY)+" x "+
+                    std::to_string(maxWorkgroupSizeZ)+
+                ")";
 
-        if (supportMeshShader) {
-            std::string maxWorkgroupSizeStr = "("+
-                std::to_string(maxWorkgroupSizeX)+" x "+
-                std::to_string(maxWorkgroupSizeY)+" x "+
-                std::to_string(maxWorkgroupSizeZ)+
-            ")";
-
-            ImGui::Text(("Tamanho Max. WorkGroup      : " + maxWorkgroupSizeStr).c_str());
-            ImGui::Text(("Qnt. Max. Task Draw         : " + std::to_string(maxTaskQnt)).c_str());
-            ImGui::Text(("Qnt. Max. Output Vertices   : " + std::to_string(maxVertices)).c_str());
-            ImGui::Text(("Qnt. Max. Output Primitivos : " + std::to_string(maxPrimitives)).c_str());
+                ImGui::Text(("Tamanho Max. WorkGroup      : " + maxWorkgroupSizeStr).c_str());
+                ImGui::Text(("Qnt. Max. Task Draw         : " + std::to_string(maxTaskQnt)).c_str());
+                ImGui::Text(("Qnt. Max. Output Vertices   : " + std::to_string(maxVertices)).c_str());
+                ImGui::Text(("Qnt. Max. Output Primitivos : " + std::to_string(maxPrimitives)).c_str());
+            }
         }
 
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader("Sistema", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text("Quadros por Segundo      :");
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_Text, (framerate > 60) ? IM_COL32(0, 255, 0, 255) : (framerate > 30) ? 
+                        IM_COL32(255, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
+            ImGui::Text(std::to_string(framerate).c_str());
+            ImGui::PopStyleColor();
 
-        ImGui::Text("Quadros por Segundo      :");
-        ImGui::SameLine();
-        ImGui::PushStyleColor(ImGuiCol_Text, (framerate > 60) ? IM_COL32(0, 255, 0, 255) : (framerate > 30) ? 
-                    IM_COL32(255, 255, 0, 255) : IM_COL32(255, 0, 0, 255));
-        ImGui::Text(std::to_string(framerate).c_str());
-        ImGui::PopStyleColor();
-        
-        ImGui::Text(("Quantidade de Triangulos : " + program->meshInfo["trizCount"]).c_str());
-        ImGui::Text(("Quantidade de Vertices   : " + program->meshInfo["vertexCount"]).c_str());
-        ImGui::Text(("Quantidade de Indices    : " + program->meshInfo["indexCount"]).c_str());
-        ImGui::Text(("Tempo de Geração (ms)    : " + program->meshInfo["timeGeneratingMesh"]).c_str());
+            ImGui::Text(("Tempo de Geração (ms)    : " + program->meshInfo["timeGeneratingMesh"]).c_str());
+            ImGui::Text(("Quantidade de Triangulos : " + program->meshInfo["trizCount"]).c_str());
+            ImGui::Text(("Quantidade de Vertices   : " + program->meshInfo["vertexCount"]).c_str());
+            ImGui::Text(("Quantidade de Indices    : " + program->meshInfo["indexCount"]).c_str());
 
-        ImGui::Separator();
-
-        if (frametimeHistory.size() >= 50) {
-            ImGui::PlotLines("##TempoFrame", frametimeHistory.data(), frametimeHistory.size(), 0, "Tempo de Frame", 0.0f, 0.1f, ImVec2(300, 50), 4);
+            if (frametimeHistory.size() >= 50) {
+                ImGui::PlotLines("##TempoFrame", frametimeHistory.data(), frametimeHistory.size(), 0, "Tempo de Frame", 0.0f, 0.1f, ImVec2(300, 50), 4);
+            }
         }
-        if (memoryUsageHistory.size() >= 50) {
-            ImGui::PlotLines("##UsoMemoria", memoryUsageHistory.data(), memoryUsageHistory.size(), 0, "Uso de Memória de Vídeo (mb)", 0.0f, totalVideoMem, ImVec2(300, 50), 4);
+
+        if (ImGui::CollapsingHeader("GPU", ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Text(("Memória de Vídeo total (mb)     : " + std::to_string((int)totalVideoMem)).c_str());
+            ImGui::Text(("Memória de Vídeo utilizada (mb) : " + std::to_string((int)actualVideoMem)).c_str());
+
+            if (memoryUsageHistory.size() >= 50) {
+                ImGui::PlotLines("##UsoMemoria", memoryUsageHistory.data(), memoryUsageHistory.size(), 0, "Uso de Memória de Vídeo (mb)", 0.0f, totalVideoMem, ImVec2(300, 50), 4);
+            }
         }
+
     }
     ImGui::End();
 
-    ImGui::Begin("Configurações");
+    ImGui::Begin("Configurações", (bool*)true, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
     {
         ImGui::Text("Implementação");
 
@@ -420,12 +443,7 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
         ImGui::Separator();
 
         if (ImGui::CollapsingHeader("Mundo")) {
-            ImGui::Checkbox("Iluminação fixa", &param->fixedLight);
-            
-            if (param->fixedLight) {
-                ImGui::Text("Direção da iluminação");
-                ImGui::SliderFloat3("##Direção da iluminação", lightDirection, -90, 90, "%.3f", 1.0f);
-            }
+            ImGui::Checkbox("Exibir bordas", &param->showWorldBounds);
 
             ImGui::Text("Bordas da Simulação");
             ImGui::DragFloat3("##WorldBounds", worldBounds, .01f, 0.0f, 100.0f, "%.3f", 1.0f);
@@ -439,6 +457,7 @@ void drawImGuiElements(Program* program, ImGuiIO& io, Parameters* param, Camera 
         if (ImGui::CollapsingHeader("Geometria")) {
             ImGui::Checkbox("Suavizar Malha", &param->smooth);
             ImGui::Checkbox("Interpolação Linear", &param->linearInterp);
+            ImGui::Checkbox("Exibir Arestas", &param->wiredMesh);
 
             ImGui::Text("Intensidade da Interpolação");
             ImGui::DragFloat("##Inten. da Interpolação", &param->smoothIntersect, 0.1f, 0.0001f, 10.0f, "%.3f");

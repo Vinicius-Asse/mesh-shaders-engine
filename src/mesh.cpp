@@ -101,7 +101,7 @@ void Mesh::rotate(glm::vec3 _rotation) {
 }
 
 void Mesh::scale(glm::vec3 _scale) {
-    model = glm::scale(model, _scale);
+    model = glm::scale(glm::mat4(1.0f), _scale);
 }
 
 void Mesh::free() {
