@@ -313,9 +313,10 @@ void GLAPIENTRY MessageCallback( GLenum source, GLenum type, GLuint id, GLenum s
 {
     if (type == GL_DEBUG_TYPE_ERROR) {
         finishError(message);
-    } else {
-        std::cout << "[WARNING] " << message << std::endl;
-    }
+    } 
+    //else {
+    //    std::cout << "[WARNING] " << message << std::endl;
+    //}
 }
 
 void setupImGuiFrame(ImGuiIO& io, SDL_Event e) {
