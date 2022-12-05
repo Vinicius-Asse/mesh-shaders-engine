@@ -1,0 +1,89 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: g++.exe arquivo de build main",
+			"command": "C:\\MinGW\\bin\\g++.exe",
+			"args": [
+				"-g",
+				"${workspaceFolder}\\src\\main.cpp",
+				"${workspaceFolder}\\glad.o",
+				"${workspaceFolder}\\imgui.o",
+				"${workspaceFolder}\\imgui_demo.o",
+				"${workspaceFolder}\\imgui_draw.o",
+				"${workspaceFolder}\\imgui_impl_opengl3.o",
+				"${workspaceFolder}\\imgui_impl_sdl.o",
+				"${workspaceFolder}\\imgui_tables.o",
+				"${workspaceFolder}\\imgui_widgets.o",
+				"-o",
+				"${workspaceFolder}\\program.exe",
+				"-I",
+				"${workspaceFolder}\\include\\",
+				"-L${workspaceFolder}\\lib",
+				"-lmingw32",
+				"-lSDL2main",
+				"-lSDL2"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compilador: C:\\MinGW\\bin\\g++.exe"
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: g++.exe compile glad.c object",
+			"command": "C:\\MinGW\\bin\\gcc.exe",
+			"args": [
+				"-g",
+				"-O",
+				"-c",
+				"${workspaceFolder}\\src\\glad.c",
+				"-I",
+				"${workspaceFolder}\\include\\",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compilador: C:\\MinGW\\bin\\g++.exe"
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: g++.exe compile imgui object",
+			"command": "C:\\MinGW\\bin\\gcc.exe",
+			"args": [
+				"-g",
+				"-O",
+				"-c",
+				"${workspaceFolder}\\include\\imgui\\imgui.cpp",
+				"${workspaceFolder}\\include\\imgui\\imgui_demo.cpp",
+				"${workspaceFolder}\\include\\imgui\\imgui_draw.cpp",
+				"${workspaceFolder}\\include\\imgui\\imgui_tables.cpp",
+				"${workspaceFolder}\\include\\imgui\\imgui_widgets.cpp",
+				"${workspaceFolder}\\include\\imgui\\imgui_impl_opengl3.cpp",
+				"${workspaceFolder}\\include\\imgui\\imgui_impl_sdl.cpp",
+				"-I",
+				"${workspaceFolder}\\include\\",
+				"-lgdi32",
+				"-lopengl32",
+				"-limm32"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "compilador: C:\\MinGW\\bin\\g++.exe"
+		}
+	]
+}

@@ -1,0 +1,41 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "C/C++ Build and Debug",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}\\program.exe",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "MIMode": "gdb",
+        "miDebuggerPath": "C:\\MinGw\\bin\\gdb.exe",
+        "environment": [],
+        "preLaunchTask": "C/C++: g++.exe arquivo de build main",
+      },
+      {
+        "name": "C/C++ Build and Run",
+        "type": "cppvsdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}\\program.exe",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "console": "integratedTerminal",
+        "preLaunchTask": "C/C++: g++.exe arquivo de build main"
+      },
+      {
+        "name": "C/C++ Run",
+        "type": "cppvsdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}\\program.exe",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "console": "integratedTerminal"
+      }
+    ]
+  }
